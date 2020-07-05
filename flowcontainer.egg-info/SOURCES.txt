@@ -1,5 +1,11 @@
 README.md
 setup.py
+flowcontainer/__init__.py
+flowcontainer/extractor.py
+flowcontainer/flow_generator.py
+flowcontainer/flows.py
+flowcontainer/network_destination.py
+flowcontainer/reader.py
 flowcontainer.egg-info/PKG-INFO
 flowcontainer.egg-info/SOURCES.txt
 flowcontainer.egg-info/dependency_links.txt
