@@ -1,0 +1,6 @@
+README.md
+setup.py
+flowcontainer.egg-info/PKG-INFO
+flowcontainer.egg-info/SOURCES.txt
+flowcontainer.egg-info/dependency_links.txt
+flowcontainer.egg-info/top_level.txt

@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: flowcontainer
+Version: 1.1
+Summary: A python lib to parse traffic flow information from pcaps
+Home-page: https://github.com/jmhIcoding/flowcontainer
+Author: Jiang Minghao
+Author-email: jiangminghao@iie.ac.cn
+License: UNKNOWN
+Description: # flowcontainer
+        Get basic flow information from pcap, such as packet length sequence, packet arrival time sequence, source IP/port, destination IP/port, start and end time.
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
