@@ -146,7 +146,7 @@ class Reader(object):
             #example: ['1592995818.017318000', '0', '6', '192.168.0.100', '49924', '23.51.209.190', '80', '60', '0']
             #input()
             # Perform check on packets
-            print(packet)
+            #print(packet)
             if len(packet) < 9: continue
 
             # Perform check on multiple ip addresses
@@ -154,9 +154,9 @@ class Reader(object):
             packet[3] = packet[3].split(',')[0]         #ip.src
             packet[5] = packet[5].split(',')[0]         #ip.dst
             packet[7] = packet[7].replace(',', '')      #ip.len
-            if packet[2]=='udp':
-                print('#' * 10)
-                print(packet)
+            #if packet[2]=='udp':
+            #    print('#' * 10)
+            #    print(packet)
             if len(packet) == 9:
                 packet.append("")
 
