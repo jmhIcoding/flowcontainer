@@ -113,7 +113,7 @@ class Reader(object):
         command = ["tshark", "-r", path, "-Tfields",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
-                   "-e", "udp.stream",
+                   "-e", "udp.stream", #only output one line
                    "-e", "ip.proto",
                    "-e", "ip.src",
                    "-e", "tcp.srcport",
@@ -125,7 +125,7 @@ class Reader(object):
                    '-e', "tcp.len",
                    "-e", "udp.length",  #only output one line
                    "-e", "tls.handshake.extensions_server_name",
-                   "-2","-R", "ip and tcp and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp"]
+                   "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp"]
         # Initialise result
         result = list()
 
@@ -146,6 +146,7 @@ class Reader(object):
             #example: ['1592995818.017318000', '0', '6', '192.168.0.100', '49924', '23.51.209.190', '80', '60', '0']
             #input()
             # Perform check on packets
+            print(packet)
             if len(packet) < 9: continue
 
             # Perform check on multiple ip addresses
@@ -153,6 +154,9 @@ class Reader(object):
             packet[3] = packet[3].split(',')[0]         #ip.src
             packet[5] = packet[5].split(',')[0]         #ip.dst
             packet[7] = packet[7].replace(',', '')      #ip.len
+            if packet[2]=='udp':
+                print('#' * 10)
+                print(packet)
             if len(packet) == 9:
                 packet.append("")
 
