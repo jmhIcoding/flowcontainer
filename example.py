@@ -1,6 +1,6 @@
 __author__ = 'dk'
 from flowcontainer.extractor import extract
-result = extract(r"1592754322_clear.pcap")
+result = extract(r"1592754322_clear.pcap",filter='tls and tcp',extension=["tls.handshake.extensions_server_name","tls.handshake.ciphersuite"])
 for key in result:
     ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)
     ### and the value is an Flow object, user can access Flow object as flowcontainer.flows.Flow's attributes refer.
@@ -30,7 +30,7 @@ for key in result:
     print('default timestamp sequence:',value.timestamps)
 
     ##access sni of the flow if any else empty str
-    print('sni:',value.sni)
+    print('extension:',value.extension)
 '''
 Output:
 ----------------

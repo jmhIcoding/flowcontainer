@@ -21,11 +21,18 @@ def extract(infile,filter="",extension=""):
         result : dict
             Dictionary of flow_key -> flow.
         """
+    if type(extension)==type(""):
+        extension = [extension]
+
+    for each in extension:
+        if type(each)!= type(""):
+            raise TypeError("extension must be string!")
+
     reader = Reader(verbose=True)
     flow_generator = FlowGenerator()
     # Read packets
     result = reader.read(infile,filter,extension)
     # Combine packets into flows
-    result = flow_generator.combine(result)
+    result = flow_generator.combine(result,extension)
     # Return result
     return result

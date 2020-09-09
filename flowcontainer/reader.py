@@ -92,7 +92,7 @@ class Reader(object):
             raise ex
 
 
-    def read_tshark(self, path,filter="",extension=""):
+    def read_tshark(self, path,filter_str="",extension=""):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -119,7 +119,7 @@ class Reader(object):
                 11) UDP length
             """
         # Create Tshark command
-        command = ["tshark", "-r", path, "-Tfields", "-E", "separator='+'",
+        command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
                    "-e", "udp.stream", #only output one line
@@ -132,23 +132,25 @@ class Reader(object):
                    "-e", "udp.dstport", #only output one line
                    "-e", "ip.len",
                    '-e', "tcp.len",
-                   "-e", "udp.length"   #only output one line
-                   ]
-        #Add filter
-        command_filter=["-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp "]
-        command_filter[-1] += filter
+                   "-e", "udp.length",   #only output one line,
+                   "-e", 'ip.id',
+                   "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
+        if filter_str != "":
+            command[-1] = command[-1].format(" and "+filter_str)
+        else:
+            command[-1] = command[-1].format("")
         #Add extension fields
         if type(extension)== type(""):
             extension  = [extension]
 
         for each in extension:
             if each!="":
-                command += ['-e',each]
-
-        #Concate the final command
-        command = command + command_filter
-        # Initialise result
+                command.insert(-5,'-e')
+                command.insert(-5,each)
         print(" ".join(command))
+        # Initialise result
+
+
         result = list()
 
         # Call Tshark on packets
@@ -164,8 +166,13 @@ class Reader(object):
         # Read each packet
         for packet in filter(None, out.decode('utf-8').split('\n')):
             # Get all data from packets
+            packet = packet.strip()
+            print(packet)
             packet = packet.split('+')
             print(packet)
+            for index,item in enumerate(packet):
+                print(index,item)
+
             #example: ['1592995818.017318000', '0', '6', '192.168.0.100', '49924', '23.51.209.190', '80', '60', '0']
             #input()
             # Perform check on packets
@@ -174,19 +181,20 @@ class Reader(object):
             if len(packet) < 9: continue
 
             # Perform check on multiple ip addresses
-            packet[2] = protocols.get(packet[2],'unknown')
-            packet[3] = packet[3].split(',')[0]         #ip.src
-            packet[5] = packet[5].split(',')[0]         #ip.dst
-            packet[7] = packet[7].replace(',', '')      #ip.len
+            packet[3] = protocols.get(packet[3],'unknown')
+            packet[4] = packet[4].split(',')[0]             #ip.src
+            packet[7] = packet[7].split(',')[0]             #ip.dst
+            packet[10] = packet[10].replace(',', '')        #ip.len
             #if packet[2]=='udp':
             #    print('#' * 10)
             #    print(packet)
-            if len(packet) == 9:
-                packet.append("")
 
             # Add packet to result
-
-            result.append([path] + packet)
+            #路径|tcp(udp)|flowid|时间戳|IP长度|srcIP|dstIP|srcport|dstport|payload长度|extension|
+            if packet[3]=='tcp':
+                result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
+            else:
+                result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
 
             #print(result[-1])
 
@@ -196,11 +204,12 @@ class Reader(object):
 
         # Check if any items exist
         if not result.shape[0]:
-            return np.zeros((0, 10), dtype=object)
+            return np.zeros((0, 12+len(extension)), dtype=object)
 
         # Change protocol number to text
 
         #print(result.shape)
         #print(result[0:2, [0, 3, 2, 1, 8, 4, 6, 5, 7, 9,10]])
         # Return in original order
-        return result[:, [0, 3, 2, 1, 8, 4, 6, 5, 7, 9,10]]
+
+        return result
