@@ -125,7 +125,7 @@ class Reader(object):
                    '-e', "tcp.len",
                    "-e", "udp.length",  #only output one line
                    "-e", "tls.handshake.extensions_server_name",
-                   "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp"]
+                   "-2","-R", "ip and esp and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp"]
         # Initialise result
         result = list()
 
