@@ -35,7 +35,7 @@ class Reader(object):
     #                             Read method                              #
     ########################################################################
 
-    def read(self, path):
+    def read(self, path,filter="",extension=""):
         """Read TCP and UDP packets from .pcap file given by path.
             Automatically choses fastest available backend to use.
 
@@ -43,6 +43,15 @@ class Reader(object):
             ----------
             path : string
                 Path to .pcap file to read.
+
+            filter : string
+                filter condition to be passed to tshark
+
+            extension : string or list (of string)
+                Additional field(s) to be extracted, besides the default fields.
+                The field name is consistent with that of Wireshark, such as tls.handshake.extension_server_name means the SNI of TLS flow.
+                If type(extension) is string, then only one extra field will be extracted.
+                If type(extension) is list of string, then multi fileds will be extracted.
 
             Returns
             -------
@@ -58,9 +67,9 @@ class Reader(object):
                 6) IP packet destination
                 7) TCP/UDP packet source port
                 8) TCP/UDP packet destination port
-                10) TCP length
-                11) UDP length
-                9) SSL/TLS Server Name Identification if exists, else ""
+                9) TCP length
+                10) UDP length
+                11) extension(s)
 
             Warning
             -------
@@ -74,7 +83,7 @@ class Reader(object):
 
         # Check if we can use fast tshark read or slow pyshark read
         try:
-            return self.read_tshark(path)
+            return self.read_tshark(path,filter,extension)
         except Exception as ex:
             warnings.warn("tshark error: '{}', defaulting to pyshark backend. "
                           "note that the pyshark backend is much slower than "
@@ -83,7 +92,7 @@ class Reader(object):
             raise ex
 
 
-    def read_tshark(self, path):
+    def read_tshark(self, path,filter="",extension=""):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -110,7 +119,7 @@ class Reader(object):
                 11) UDP length
             """
         # Create Tshark command
-        command = ["tshark", "-r", path, "-Tfields",
+        command = ["tshark", "-r", path, "-Tfields", "-E", "separator='+'",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
                    "-e", "udp.stream", #only output one line
@@ -123,10 +132,23 @@ class Reader(object):
                    "-e", "udp.dstport", #only output one line
                    "-e", "ip.len",
                    '-e', "tcp.len",
-                   "-e", "udp.length",  #only output one line
-                   "-e", "tls.handshake.extensions_server_name",
-                   "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp"]
+                   "-e", "udp.length"   #only output one line
+                   ]
+        #Add filter
+        command_filter=["-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp "]
+        command_filter[-1] += filter
+        #Add extension fields
+        if type(extension)== type(""):
+            extension  = [extension]
+
+        for each in extension:
+            if each!="":
+                command += ['-e',each]
+
+        #Concate the final command
+        command = command + command_filter
         # Initialise result
+        print(" ".join(command))
         result = list()
 
         # Call Tshark on packets
@@ -142,11 +164,13 @@ class Reader(object):
         # Read each packet
         for packet in filter(None, out.decode('utf-8').split('\n')):
             # Get all data from packets
-            packet = packet.split()
+            packet = packet.split('+')
+            print(packet)
             #example: ['1592995818.017318000', '0', '6', '192.168.0.100', '49924', '23.51.209.190', '80', '60', '0']
             #input()
             # Perform check on packets
             #print(packet)
+
             if len(packet) < 9: continue
 
             # Perform check on multiple ip addresses
