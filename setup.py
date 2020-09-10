@@ -2,7 +2,7 @@
 __author__ = 'dk'
 import setuptools
 long_desp = ""
-with open("README.md","r") as fp:
+with open("README.md","r",encoding='utf8') as fp:
     long_desp = fp.read()
 setuptools.setup(
     name="flowcontainer",

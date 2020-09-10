@@ -64,8 +64,8 @@ class Flow(object):
         self.dst   = None
         self.dport = None
 
-        # Initialise SNI
-        self.sni = ""
+        # Initialise extension
+        self.extension = dict()
         # Initialise packet lengths
         self.ip_lengths   = list()
         self.payload_lengths = list()
@@ -80,7 +80,7 @@ class Flow(object):
     #                        Add new packet to flow                        #
     ########################################################################
 
-    def add(self, packet):
+    def add(self, packet,extension):
         """Add a new packet to the flow.
 
             Parameters
@@ -110,12 +110,13 @@ class Flow(object):
             self.src  , self.dst   = ip_b  , ip_a
             self.sport, self.dport = port_b, port_a
 
-        # Add certificate if any
-        if packet[-1]!= "":
-            if self.sni != "" and self.sni != packet[-1]:
-                print(self.sni,'!=',packet[-1])
-                raise ValueError("Multiple TLS SNI found in single flow")
-            self.sni = packet[-1]
+        # Add extension if any
+        for i in range(len(packet[-1])):
+            if packet[-1][i] != "":
+                if extension[i] not in self.extension:
+                    self.extension.setdefault(extension[i],[])
+                self.extension[extension[i]].append(packet[-1][i])
+
 
         # Set timestamps and lengths
         #print(packet)
@@ -169,13 +170,13 @@ class Flow(object):
                 datetime.fromtimestamp(min(self.timestamps)).strftime("%H:%M:%S.%f"),
                 datetime.fromtimestamp(max(self.timestamps)).strftime("%H:%M:%S.%f"),
                 self.src, self.sport, self.dst, self.dport,
-                len(self),self.sni)
+                len(self),self.extension)
         else:
             return "[Time {} to {}] {:>15}:{:<5} <-> {:>15}:{:<5} [Payload Packet Size Length {}] [SNI: {}]".format(
                 datetime.fromtimestamp(min(self.timestamps)).strftime("%H:%M:%S.%f"),
                 datetime.fromtimestamp(max(self.timestamps)).strftime("%H:%M:%S.%f"),
                 self.src, self.sport, self.dst, self.dport,
-                len(self),self.sni)
+                len(self),self.extension)
     def __gt__(self, other):
         """Greater than object override"""
         return min(self.timestamps) >  min(other.timestamps)
