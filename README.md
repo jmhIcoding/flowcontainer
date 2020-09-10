@@ -13,10 +13,9 @@ pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
 # 库的使用
-示例代码：
+示例代码：`example.py` 是一个例程，用于展示flowcontainer的用法.
+
 直接导入extract函数，然后给定pcap的路径即可。
-
-
 
 - 打开pcap文件，同时设置过滤规则和过滤规则。
 
