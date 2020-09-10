@@ -9,7 +9,7 @@ except:
 class FlowGenerator(object):
     """Generator for Flows from packets extraced using reader.Reader.read()"""
 
-    def combine(self, packets):
+    def combine(self, packets,extention=[]):
         """Combine individual packets into a flow representation
 
             Parameters
@@ -29,7 +29,7 @@ class FlowGenerator(object):
         for packet in packets:
             key = (packet[0], packet[1], packet[2])
             # Add packet to flow
-            result[key] = result.get(key, Flow()).add(packet)
+            result[key] = result.get(key, Flow()).add(packet,extention)
 
         # Return result
         return result

@@ -6,8 +6,8 @@ with open("README.md","r") as fp:
     long_desp = fp.read()
 setuptools.setup(
     name="flowcontainer",
-    version="1.2",
-    author="Jiang Minghao",
+    version="2.1",
+    author="Minghao Jiang",
     author_email="jiangminghao@iie.ac.cn",
     description="A python lib to parse traffic flow information from pcaps",
     url="https://github.com/jmhIcoding/flowcontainer",
