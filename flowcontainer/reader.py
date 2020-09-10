@@ -147,7 +147,7 @@ class Reader(object):
             if each!="":
                 command.insert(-5,'-e')
                 command.insert(-5,each)
-        print(" ".join(command))
+        #print(" ".join(command))
         # Initialise result
 
 
@@ -167,18 +167,9 @@ class Reader(object):
         for packet in filter(None, out.decode('utf-8').split('\n')):
             # Get all data from packets
             packet = packet.strip()
-            print(packet)
             packet = packet.split('+')
-            print(packet)
-            for index,item in enumerate(packet):
-                print(index,item)
 
-            #example: ['1592995818.017318000', '0', '6', '192.168.0.100', '49924', '23.51.209.190', '80', '60', '0']
-            #input()
-            # Perform check on packets
-            #print(packet)
-
-            if len(packet) < 9: continue
+            if len(packet) < 14: continue
 
             # Perform check on multiple ip addresses
             packet[3] = protocols.get(packet[3],'unknown')
