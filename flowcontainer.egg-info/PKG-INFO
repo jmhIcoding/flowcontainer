@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: flowcontainer
-Version: 2.3
+Version: 2.4
 Summary: A python lib to parse traffic flow information from pcaps
 Home-page: https://github.com/jmhIcoding/flowcontainer
 Author: Minghao Jiang

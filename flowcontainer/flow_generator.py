@@ -30,6 +30,12 @@ class FlowGenerator(object):
             key = (packet[0], packet[1], packet[2])
             # Add packet to flow
             result[key] = result.get(key, Flow()).add(packet,extention)
-
+        #Remove empty payload flow
+        insuitable_flow = list()
+        for each in result:
+            if len(result[each].payload_lengths) <= 10 :
+                insuitable_flow.append(each)
+        for each in insuitable_flow:
+            result.pop(each)
         # Return result
         return result

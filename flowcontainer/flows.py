@@ -93,6 +93,7 @@ class Flow(object):
             self : self
                 Returns self
             """
+        #print(packet)
         # Extract IPs from packet
         ip_a, ip_b = packet[5], packet[6]
         # Extract ports from packet
