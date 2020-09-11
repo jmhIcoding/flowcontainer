@@ -1,6 +1,6 @@
 __author__ = 'dk'
 from flowcontainer.extractor import extract
-result = extract(r"1592754322_clear.pcap")
+result = extract(r"ipsec.pcapng",filter='',extension=['esp','openvpn','ssh'])
 for key in result:
     ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)
     ### and the value is an Flow object, user can access Flow object as flowcontainer.flows.Flow's attributes refer.

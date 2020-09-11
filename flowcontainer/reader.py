@@ -168,7 +168,7 @@ class Reader(object):
             # Get all data from packets
             packet = packet.strip()
             packet = packet.split('+')
-
+            #print(packet)
             if len(packet) < 14: continue
 
             # Perform check on multiple ip addresses

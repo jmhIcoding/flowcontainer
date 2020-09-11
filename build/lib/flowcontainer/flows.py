@@ -112,7 +112,7 @@ class Flow(object):
 
         # Add extension if any
         for i in range(len(packet[-1])):
-            if packet[-1][i] != "":
+            #if packet[-1][i] != "":
                 if extension[i] not in self.extension:
                     self.extension.setdefault(extension[i],[])
                 self.extension[extension[i]].append(packet[-1][i])

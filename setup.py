@@ -1,12 +1,15 @@
 #coding:utf8
 __author__ = 'dk'
 import setuptools
-long_desp = ""
-with open("README.md","r",encoding='utf8') as fp:
-    long_desp = fp.read()
+long_desp = \
+'''
+A python lib to parse traffic flow information from pcaps.\n
+Homepage : https://github.com/jmhIcoding/flowcontainer
+'''
+
 setuptools.setup(
     name="flowcontainer",
-    version="2.1",
+    version="2.3",
     author="Minghao Jiang",
     author_email="jiangminghao@iie.ac.cn",
     description="A python lib to parse traffic flow information from pcaps",
