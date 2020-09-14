@@ -1,9 +1,4 @@
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-import glob
 import numpy as np
-import os
-import pyshark
 import warnings
 from subprocess import Popen, PIPE
 
