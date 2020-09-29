@@ -9,7 +9,7 @@ Homepage : https://github.com/jmhIcoding/flowcontainer
 
 setuptools.setup(
     name="flowcontainer",
-    version="2.5",
+    version="2.6",
     author="Minghao Jiang",
     author_email="jiangminghao@iie.ac.cn",
     description="A python lib to parse traffic flow information from pcaps",

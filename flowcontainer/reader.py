@@ -84,7 +84,7 @@ class Reader(object):
                           "note that the pyshark backend is much slower than "
                           "the tshark backend."
                           .format(ex))
-            raise ex
+            #raise ex
 
 
     def read_tshark(self, path,filter_str="",extension=""):
