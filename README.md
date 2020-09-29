@@ -8,7 +8,13 @@ pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
 
 - python3
 - numpy>=18.1
-- 系统安装好tshark的最新版本（3.0.0）,并将tshark所在的目录添加到系统的环境目录
+- 系统安装好tshark,并将tshark所在的目录添加到系统的环境目录
+
+*如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。*
+
+*如果需要提取tls的sni,那么tshark的版本需要大于3.0.0*
+
+*如果需要提取upd.payload,那么tshark的版本需要大于3.3.0*
 
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
