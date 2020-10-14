@@ -30,7 +30,7 @@ class Reader(object):
     #                             Read method                              #
     ########################################################################
 
-    def read(self, path,filter="",extension=""):
+    def read(self, path,filter="",extension="",ppp_gre=False):
         """Read TCP and UDP packets from .pcap file given by path.
             Automatically choses fastest available backend to use.
 
@@ -78,7 +78,7 @@ class Reader(object):
 
         # Check if we can use fast tshark read or slow pyshark read
         try:
-            return self.read_tshark(path,filter,extension)
+            return self.read_tshark(path,filter,extension,ppp_gre)
         except Exception as ex:
             warnings.warn("tshark error: '{}', defaulting to pyshark backend. "
                           "note that the pyshark backend is much slower than "
@@ -87,7 +87,7 @@ class Reader(object):
             #raise ex
 
 
-    def read_tshark(self, path,filter_str="",extension=""):
+    def read_tshark(self, path,filter_str="",extension="",ppp_gre=False):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -114,7 +114,8 @@ class Reader(object):
                 11) UDP length
             """
         # Create Tshark command
-        command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
+        if ppp_gre == False:
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
                    "-e", "udp.stream", #only output one line
@@ -130,6 +131,24 @@ class Reader(object):
                    "-e", "udp.length",   #only output one line,
                    "-e", 'ip.id',
                    "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
+        else:
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
+                   "-e", "frame.time_epoch",
+                   "-e", "tcp.stream",
+                   "-e", "udp.stream", #only output one line
+                   "-e", "ip.proto",
+                   "-e", "ip.src",
+                   "-e", "tcp.srcport",
+                   "-e", "udp.srcport", #only output one line
+                   "-e", "ip.dst",
+                   "-e", "tcp.dstport",
+                   "-e", "udp.dstport", #only output one line
+                   "-e", "ip.len",
+                   '-e', "gre.key.payload_length",
+                   "-e", "gre.key.payload_length",   #only output one line,
+                   "-e", 'ip.id',
+                   "-2","-R", "gre{0}"]
+
         if filter_str != "":
             command[-1] = command[-1].format(" and "+filter_str)
         else:
@@ -142,7 +161,7 @@ class Reader(object):
             if each!="":
                 command.insert(-5,'-e')
                 command.insert(-5,each)
-        #print(" ".join(command))
+        # print(" ".join(command))
         # Initialise result
 
 
@@ -157,7 +176,7 @@ class Reader(object):
         if err:
             warnings.warn("Error reading file: '{}'".format(
                 err.decode('utf-8')))
-        protocols = {'17': 'udp', '6': 'tcp'}
+        protocols = {'17': 'udp', '6': 'tcp','47':'gre'}
         # Read each packet
         for packet in filter(None, out.decode('utf-8').split('\n')):
             # Get all data from packets
@@ -179,9 +198,10 @@ class Reader(object):
             #路径|tcp(udp)|flowid|时间戳|IP长度|srcIP|dstIP|srcport|dstport|payload长度|extension|
             if packet[3]=='tcp':
                 result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
-            else:
+            elif packet[3]=='udp':
                 result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
-
+            else:   #非tcp,udp协议
+                result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[12],packet[13:-1]])
             #print(result[-1])
 
         # Get result as numpy array
