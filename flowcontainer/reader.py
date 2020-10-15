@@ -30,7 +30,7 @@ class Reader(object):
     #                             Read method                              #
     ########################################################################
 
-    def read(self, path,filter="",extension="",ppp_gre=False):
+    def read(self, path,filter="",extension="",ip_layer =False):
         """Read TCP and UDP packets from .pcap file given by path.
             Automatically choses fastest available backend to use.
 
@@ -78,7 +78,7 @@ class Reader(object):
 
         # Check if we can use fast tshark read or slow pyshark read
         try:
-            return self.read_tshark(path,filter,extension,ppp_gre)
+            return self.read_tshark(path,filter,extension,ip_layer)
         except Exception as ex:
             warnings.warn("tshark error: '{}', defaulting to pyshark backend. "
                           "note that the pyshark backend is much slower than "
@@ -87,7 +87,7 @@ class Reader(object):
             #raise ex
 
 
-    def read_tshark(self, path,filter_str="",extension="",ppp_gre=False):
+    def read_tshark(self, path,filter_str="",extension="",ip_layer =False):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -114,7 +114,7 @@ class Reader(object):
                 11) UDP length
             """
         # Create Tshark command
-        if ppp_gre == False:
+        if ip_layer == False:
             command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
@@ -144,24 +144,24 @@ class Reader(object):
                    "-e", "tcp.dstport",
                    "-e", "udp.dstport", #only output one line
                    "-e", "ip.len",
-                   '-e', "gre.key.payload_length",
-                   "-e", "gre.key.payload_length",   #only output one line,
+                   '-e', "tcp.len",
+                   "-e", "udp.length",   #only output one line,
                    "-e", 'ip.id',
-                   "-2","-R", "gre{0}"]
+                   "-2","-R", "ip and not icmp{0}"]
 
         if filter_str != "":
             command[-1] = command[-1].format(" and "+filter_str)
         else:
             command[-1] = command[-1].format("")
         #Add extension fields
-        if type(extension)== type(""):
+        if type(extension) == type(""):
             extension  = [extension]
 
         for each in extension:
             if each!="":
                 command.insert(-5,'-e')
                 command.insert(-5,each)
-        # print(" ".join(command))
+        #print(" ".join(command))
         # Initialise result
 
 
@@ -200,8 +200,8 @@ class Reader(object):
                 result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
             elif packet[3]=='udp':
                 result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
-            else:   #非tcp,udp协议
-                result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[12],packet[13:-1]])
+            else:   #非tcp,udp协议,那就只提取ip-len。对于此类flowid填0,源端口填1,目的端口填0
+                result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[10],packet[13:-1]])
             #print(result[-1])
 
         # Get result as numpy array

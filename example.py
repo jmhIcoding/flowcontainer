@@ -1,6 +1,7 @@
 __author__ = 'dk'
 from flowcontainer.extractor import extract
-result = extract(r"./pptp_dropbox_pc_5.pcap",filter='',extension=[],ppp_gre=True)
+result = extract(r"./ipsec.pcapng",filter='',extension=[],ip_layer= True)
+
 for key in result:
     ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)
     ### and the value is an Flow object, user can access Flow object as flowcontainer.flows.Flow's attributes refer.
@@ -32,3 +33,4 @@ for key in result:
     ##access sni of the flow if any else empty str
     print('extension:',value.extension)
 
+print(len(result))
