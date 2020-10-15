@@ -196,9 +196,9 @@ class Reader(object):
 
             # Add packet to result
             #路径|tcp(udp)|flowid|时间戳|IP长度|srcIP|dstIP|srcport|dstport|payload长度|extension|
-            if packet[3]=='tcp':
+            if packet[3]=='tcp' and ip_layer == False:
                 result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
-            elif packet[3]=='udp':
+            elif packet[3]=='udp' and ip_layer == False:
                 result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
             else:   #非tcp,udp协议,那就只提取ip-len。对于此类flowid填0,源端口填1,目的端口填0
                 result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[10],packet[13:-1]])
