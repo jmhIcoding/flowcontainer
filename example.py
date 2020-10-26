@@ -1,6 +1,6 @@
 __author__ = 'dk'
 from flowcontainer.extractor import extract
-result = extract(r"./l2tp.pcap",filter='esp or gre',extension=[],ip_layer= False)
+result = extract(r"./tls.pcap",filter='tcp or udp',extension=[],ip_layer= False)
 
 for key in result:
     ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)

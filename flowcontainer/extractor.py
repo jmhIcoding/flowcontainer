@@ -1,7 +1,7 @@
 __author__ = 'dk'
 from flowcontainer.reader import Reader
 from flowcontainer.flow_generator import FlowGenerator
-def extract(infile,filter="",extension="", ip_layer=False):
+def extract(infile,filter="(tcp or udp or gre)",extension="", ip_layer=False):
     """Extract flows from given pcap file.
 
         Parameters

@@ -4,12 +4,14 @@ import setuptools
 long_desp = \
 '''
 A python lib to parse traffic flow information from pcaps.\n
-Homepage : https://github.com/jmhIcoding/flowcontainer
+Homepage : https://github.com/jmhIcoding/flowcontainer.\n
+Fix bugs:\n
+\t set the default filter string to be `tcp or udp or gre`
 '''
 
 setuptools.setup(
     name="flowcontainer",
-    version="3.2",
+    version="3.4",
     author="Minghao Jiang",
     author_email="jiangminghao@iie.ac.cn",
     description="A python lib to parse traffic flow information from pcaps",
