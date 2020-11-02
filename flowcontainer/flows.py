@@ -94,11 +94,16 @@ class Flow(object):
                 Returns self
             """
         #print(packet)
-        # Extract IPs from packet
-        ip_a, ip_b = packet[5], packet[6]
-        # Extract ports from packet
-        port_a, port_b = int(packet[7]), int(packet[8])
-
+        try:
+            # Extract IPs from packet
+            ip_a, ip_b = packet[5], packet[6]
+        except BaseException as exp:
+            raise ValueError('This is not ip packet.')
+        try:
+            # Extract ports from packet
+            port_a, port_b = int(packet[7]), int(packet[8])
+        except BaseException as exp:
+            raise ValueError('This ip packet is not sample of tcp or udp or gre.')
         # Perform packet check
         if self.src is not None:
             if {self.src, self.dst} != {ip_a, ip_b} and {self.sport, self.dport} != {port_a, port_b}:

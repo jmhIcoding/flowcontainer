@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: flowcontainer
-Version: 2.6
+Version: 3.5
 Summary: A python lib to parse traffic flow information from pcaps
 Home-page: https://github.com/jmhIcoding/flowcontainer
 Author: Minghao Jiang
@@ -9,7 +9,11 @@ License: UNKNOWN
 Description: 
         A python lib to parse traffic flow information from pcaps.
         
-        Homepage : https://github.com/jmhIcoding/flowcontainer
+        Homepage : https://github.com/jmhIcoding/flowcontainer.
+        
+        Fix bugs:
+        
+        	 set the default filter string to be `tcp or udp or gre`
         
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
