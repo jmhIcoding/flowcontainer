@@ -16,6 +16,9 @@ pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
 
 *如果需要提取upd.payload,那么tshark的版本需要大于3.3.0*
 
+<font color="red" >
+<bold>另外，请确保运行脚本的shell（尤其是pycharm和vscode里面的shell）能够正确运行 tshark ! 否则程序一定报错！</bold> </font>
+
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
 # 库的使用
