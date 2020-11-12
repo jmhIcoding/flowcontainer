@@ -1,20 +1,23 @@
 # 库介绍
 flowcontainer是基于python3的网络流量基本信息提取库，以方便完成网络流量的分析任务。给定pcap文件，该库会提取pcap所有的流的相关信息，其中流信息包括：流的源端口、源IP、目的IP、目的端口、IP数据包的长度序列、IP数据集的到达时间序列、有效载荷序列以及相应有效载荷的到达时间序列、等扩展信息。库会对IP数据包做过滤，那些tcp/udp载荷不为0的数据包会统计到有效载荷序列里面。工具简单易用，扩展性和复用性高。
 # 库的安装
+最新版：
 ```bash
 pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
+```
+稳定版：
+```bash
+pip3 install flowcontainer
 ```
 # 库的环境
 
 - python3
 - numpy>=18.1
-- 系统安装好tshark,并将tshark所在的目录添加到系统的环境目录
+- 系统安装好wireshark的最新版本（3.0.0）,并将tshark所在的目录添加到系统的环境目录。安装好wireshark就会顺带把tshark也安装好。
 
-*如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。*
-
-*如果需要提取tls的sni,那么tshark的版本需要大于3.0.0*
-
-*如果需要提取upd.payload,那么tshark的版本需要大于3.3.0*
+**如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。
+如果需要提取tls的sni,那么tshark的版本需要大于3.0.0
+如果需要提取upd.payload,那么tshark的版本需要大于3.3.0**
 
 <font color="red" >
 <bold>另外，请确保运行脚本的shell（尤其是pycharm和vscode里面的shell）能够正确运行 tshark ! 否则程序一定报错！</bold> </font>
@@ -22,9 +25,10 @@ pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
 # 库的使用
-示例代码：`example.py` 是一个例程，用于展示flowcontainer的用法.
-
+示例代码：
 直接导入extract函数，然后给定pcap的路径即可。
+
+
 
 - 打开pcap文件，同时设置过滤规则和过滤规则。
 
@@ -107,6 +111,21 @@ for key in result:
     print('extension:',value.extension)
 ```
 值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。
+
+# 常见问题：
+- 报找不到文件的错误。
+解决方法：1. 检查pcap的路径是否正确 2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
+
+此ISSUE 致谢：宝哥
+- 报 ValueError: invalid literal for int() with base 10: 错误
+异常输出：
+```shell
+if int(packet[9]) != 0:
+ValueError: invalid literal for int() with base 10: ''
+```
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。
+
+此ISSUE 致谢：宝哥
 
 ## 示例输出：
 
@@ -306,5 +325,4 @@ default length sequence: []
 default timestamp sequence: []
 extension: {}
 ```
-
 
