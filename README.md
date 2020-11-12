@@ -24,6 +24,22 @@ pip3 install flowcontainer
 
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
+# 常见问题以及排除
+- 报找不到文件的错误。
+解决方法：1. 检查pcap的路径是否正确，最好使用绝对路径  2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
+
+此ISSUE 致谢：宝哥
+- 报 ValueError: invalid literal for int() with base 10: 错误
+异常输出：
+```shell
+if int(packet[9]) != 0:
+ValueError: invalid literal for int() with base 10: ''
+```
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。
+
+此ISSUE 致谢：宝哥
+
+- 其他问题： 请在github提交issue,然后上传出问题的数据包和调用例程方便解决问题。
 # 库的使用
 示例代码：
 直接导入extract函数，然后给定pcap的路径即可。
@@ -111,22 +127,6 @@ for key in result:
     print('extension:',value.extension)
 ```
 值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。
-
-# 常见问题：
-- 报找不到文件的错误。
-解决方法：1. 检查pcap的路径是否正确 2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
-
-此ISSUE 致谢：宝哥
-- 报 ValueError: invalid literal for int() with base 10: 错误
-异常输出：
-```shell
-if int(packet[9]) != 0:
-ValueError: invalid literal for int() with base 10: ''
-```
-解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。
-
-此ISSUE 致谢：宝哥
-
 ## 示例输出：
 
 ```python
