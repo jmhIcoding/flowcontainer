@@ -103,6 +103,14 @@ for key in result:
     ## access payload packet timestamps sequence:
     print('payload timestamps:',value.payload_timestamps)
 ```
+- 访问流的开始时间和结束时间
+
+```python
+	print('start timestamp :',value.time_start)
+	print('end timestamp :',value.time_end)
+```
+需要注意的是，这里流的开始时间和结束时间是基于默认的时间戳【目前是有效载荷序列的时间戳，而不是IP数据包的时间戳】来计算的。
+
 - 访问IP包长度序列和到达时间序列
 
 这个序列和载荷序列的区别在于：载荷序列是tcp/udp载荷不为空的tcp/udp载荷序列。IP包序列会把那些握手包，无载荷的tcp/udp包也统计进来。
