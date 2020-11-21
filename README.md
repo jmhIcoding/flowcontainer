@@ -15,9 +15,11 @@ pip3 install flowcontainer
 - numpy>=18.1
 - 系统安装好wireshark的最新版本（3.0.0）,并将tshark所在的目录添加到系统的环境目录。安装好wireshark就会顺带把tshark也安装好。
 
-**如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。
-如果需要提取tls的sni,那么tshark的版本需要大于3.0.0
-如果需要提取upd.payload,那么tshark的版本需要大于3.3.0**
+**如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。**
+
+**如果需要提取tls的sni,那么tshark的版本需要大于3.0.0。**
+
+**如果需要提取upd.payload,那么tshark的版本需要大于3.3.0**
 
 <font color="red" >
 <bold>另外，请确保运行脚本的shell（尤其是pycharm和vscode里面的shell）能够正确运行 tshark ! 否则程序一定报错！</bold> </font>
@@ -35,7 +37,7 @@ pip3 install flowcontainer
 if int(packet[9]) != 0:
 ValueError: invalid literal for int() with base 10: ''
 ```
-解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
 
 此ISSUE 致谢：宝哥
 
@@ -136,13 +138,17 @@ for key in result:
 ```
 值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。**list的长度与ip包长序列【并不是载荷长度序列】的长度是一样的，表示对于每个ip packet都会提取extension所需的字段，如果当前ip packet没有这个字段，那么该字段的取值为空字符串`''`，否则为实际的取值。之所以保留空字符串，是方便IP长度与扩展之间的对齐，实际使用中如果不需要此类对齐信息，请注意过滤list里面的空字符串。**
 
+此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取**。
+
 常见扩展字段：
 
-| 字段名 | extension取值 |
-|--|--|
-| sni | tls.handshake.extensions_server_name |
-|ssl的cipher_suits|tls.handshake.ciphersuite|
-|x509证书|tls.handshake.certificate|
+| 字段名 | extension取值 |备注|
+|--|--|--|
+| sni | tls.handshake.extensions_server_name |tshark版本 $\ge$ 3.0.0|
+|ssl的cipher_suits|tls.handshake.ciphersuite|tshark版本 $\ge$ 3.0.0|
+|x509证书|tls.handshake.certificate|tshark版本 $\ge$ 3.0.0|
+|udp载荷|udp.payload|tshark版本 $\ge$ **3.3.0**|
+|tcp载荷|tcp.payload|无|
 
 
 # 示例输出：
