@@ -90,10 +90,11 @@ class Reader(object):
             if __flag__ == None:
                 # Call Tshark on packets
                 command = 'tshark -v'
-                process = Popen(command, stdout=PIPE, stderr=PIPE)
-                # Get output
-                out, err = process.communicate()
-                if err :
+                try:
+                    process = Popen(command, stdout=PIPE, stderr=PIPE)
+                    # Get output
+                    out, err = process.communicate()
+                except :
                     raise  EnvironmentError('tshark is not installed or added to environment path.')
                 head = out.decode("utf-8").split('\n')[0].strip()
                 version = re.findall('TShark \(Wireshark\) (.*?) \(',head,re.DOTALL)[0]
