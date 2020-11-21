@@ -78,17 +78,17 @@ for key in result:
     value = result[key]
     print('Flow {0} info:'.format(key))
  ```
-- 提取流的源IP
+- **提取流的源IP**
  ```python
     ## access ip src
     print('src ip:',value.src)
  ```
-- 提取流的目的IP
+- **提取流的目的IP**
  ```python
     ## access ip dst
     print('dst ip:',value.dst)
  ```
-- 提取流的端口信息
+- **提取流的端口信息**
 ```python
     ## access srcport
     print('sport:',value.sport)
@@ -96,14 +96,14 @@ for key in result:
     print('dport:',value.dport)
 ```
 
-- 访问载荷长度序列和到达时间序列
+- **访问载荷长度序列和到达时间序列**
 ```python
     ## access payload packet lengths
     print('payload lengths :',value.payload_lengths)
     ## access payload packet timestamps sequence:
     print('payload timestamps:',value.payload_timestamps)
 ```
-- 访问流的开始时间和结束时间
+- **访问流的开始时间和结束时间**
 
 ```python
 	print('start timestamp :',value.time_start)
@@ -111,7 +111,7 @@ for key in result:
 ```
 需要注意的是，这里流的开始时间和结束时间是基于默认的时间戳【目前是有效载荷序列的时间戳，而不是IP数据包的时间戳】来计算的。
 
-- 访问IP包长度序列和到达时间序列
+- **访问IP包长度序列和到达时间序列**
 
 这个序列和载荷序列的区别在于：载荷序列是tcp/udp载荷不为空的tcp/udp载荷序列。IP包序列会把那些握手包，无载荷的tcp/udp包也统计进来。
 
@@ -121,7 +121,7 @@ for key in result:
     ## access ip packet timestamp sequence, (including packets with zero payload)
     print('ip packets timestamps:',value.ip_timestamps)
 ```
-- 访问默认序列信息，默认是载荷序列信息
+- **访问默认序列信息，默认是载荷序列信息**
 ```python
     ## access default lengths sequence, the default length sequences is the payload lengths sequences
     print('default length sequence:',value.lengths)
@@ -129,41 +129,65 @@ for key in result:
     print('default timestamp sequence:',value.timestamps)
 ```
 
-- 访问扩展字段
+- **访问扩展字段**
 ```python
     ##access sni of the flow if any else empty str
     print('extension:',value.extension)
 ```
-值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。
-## 示例输出：
+值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。**list的长度与ip包长序列【并不是载荷长度序列】的长度是一样的，表示对于每个ip packet都会提取extension所需的字段，如果当前ip packet没有这个字段，那么该字段的取值为空字符串`''`，否则为实际的取值。之所以保留空字符串，是方便IP长度与扩展之间的对齐，实际使用中如果不需要此类对齐信息，请注意过滤list里面的空字符串。**
 
+常见扩展字段：
+
+| 字段名 | extension取值 |
+|--|--|
+| sni | tls.handshake.extensions_server_name |
+|ssl的cipher_suits|tls.handshake.ciphersuite|
+|x509证书|tls.handshake.certificate|
+
+
+# 示例输出：
+代码：
 ```python
-Reading 1592754322_clear.pcap...
-tshark -r 1592754322_clear.pcap -Tfields -E separator=+ -e frame.time_epoch -e tcp.stream -e udp.stream -e ip.proto -e ip.src -e tcp.srcport -e udp.srcport -e ip.dst -e tcp.dstport -e udp.dstport -e ip.len -e tcp.len -e udp.length -e tls.handshake.extensions_server_name -e tls.handshake.ciphersuite -e ip.id -2 -R ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp
-Flow ('1592754322_clear.pcap', 'tcp', '0') info:
-src ip: 10.82.8.58
-dst ip: 69.171.228.20
-sport: 49658
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60]
-ip packets timestamps: [1592754327.186764]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
-Flow ('1592754322_clear.pcap', 'tcp', '1') info:
-src ip: 10.82.8.58
-dst ip: 69.171.228.20
-sport: 49659
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60]
-ip packets timestamps: [1592754327.186771]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
+__author__ = 'dk'
+from flowcontainer.extractor import extract
+result = extract(r"1592754322_clear.pcap",filter='(tcp or udp)',extension=['tls.handshake.extensions_server_name'])
+
+for key in result:
+    ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)
+    ### and the value is an Flow object, user can access Flow object as flowcontainer.flows.Flow's attributes refer.
+
+    value = result[key]
+    print('Flow {0} info:'.format(key))
+    ## access ip src
+    print('src ip:',value.src)
+    ## access ip dst
+    print('dst ip:',value.dst)
+    ## access srcport
+    print('sport:',value.sport)
+    ## access_dstport
+    print('dport:',value.dport)
+    ## access payload packet lengths
+    print('payload lengths :',value.payload_lengths)
+    ## access payload packet timestamps sequence:
+    print('payload timestamps:',value.payload_timestamps)
+    ## access ip packet lengths, (including packets with zero payload, and ip header)
+    print('ip packets lengths:',value.ip_lengths)
+    ## access ip packet timestamp sequence, (including packets with zero payload)
+    print('ip packets timestamps:',value.ip_timestamps)
+
+    ## access default lengths sequence, the default length sequences is the payload lengths sequences
+    print('default length sequence:',value.lengths)
+    ## access default timestamp sequence, the default timestamp sequence is the payload timestamp sequences
+    print('default timestamp sequence:',value.timestamps)
+
+    ##access sni of the flow if any else empty str
+    print('extension:',value.extension)
+
+print(len(result))
+```
+
+上面这段代码会提取流的基本信息，同时提取ssl流的sni，示例输出：
+```python
 Flow ('1592754322_clear.pcap', 'tcp', '2') info:
 src ip: 10.82.8.58
 dst ip: 87.240.137.206
@@ -175,7 +199,7 @@ ip packets lengths: [60, -52, 40, 211, -1410, 40, -1064, 40, 40, -40, 40]
 ip packets timestamps: [1592754329.508596, 1592754332.515984, 1592754332.515993, 1592754332.516003, 1592754333.506533, 1592754333.506548, 1592754341.157636, 1592754341.157648, 1592754346.628817, 1592754346.914112, 1592754346.914114]
 default length sequence: [171, -1370, -1024]
 default timestamp sequence: [1592754332.516003, 1592754333.506533, 1592754341.157636]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53', '49195']}
+extension: {'tls.handshake.extensions_server_name': ['', '', '', 'api.vk.com', '', '', '', '', '', '', '']}
 Flow ('1592754322_clear.pcap', 'tcp', '3') info:
 src ip: 10.82.8.58
 dst ip: 87.240.137.206
@@ -187,103 +211,7 @@ ip packets lengths: [60, -52, 40, 211, -40, -1248, 52, 52, 52, -40, 40]
 ip packets timestamps: [1592754329.508604, 1592754344.451468, 1592754344.451471, 1592754344.451481, 1592754344.451487, 1592754344.451491, 1592754344.451494, 1592754346.326589, 1592754346.628819, 1592754346.914107, 1592754346.91411]
 default length sequence: [171, -1208]
 default timestamp sequence: [1592754344.451481, 1592754344.451491]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53']}
-Flow ('1592754322_clear.pcap', 'tcp', '4') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48945
-dport: 443
-payload lengths : [171, -1370, -2576, 93, -69, 616, -1308, 394, 243, 1350, 300, 1350, 1350, 1350, 1350, 1350, 1350, 958]
-payload timestamps: [1592754329.50862, 1592754329.508629, 1592754329.803942, 1592754329.804073, 1592754330.287781, 1592754330.287791, 1592754330.526794, 1592754331.576584, 1592754331.576596, 1592754332.515501, 1592754332.516012, 1592754339.229441, 1592754339.229511, 1592754339.23021, 1592754339.230248, 1592754339.230251, 1592754340.226757, 1592754340.226786]
-ip packets lengths: [60, -52, 40, 211, -1410, 40, -2616, 40, 133, -109, 668, -1348, 60, 454, 303, 1410, 360, -52, 1410, 1410, 1410, 1410, 1410, 1410, 1018, -40, 60]
-ip packets timestamps: [1592754329.508606, 1592754329.508616, 1592754329.508618, 1592754329.50862, 1592754329.508629, 1592754329.508631, 1592754329.803942, 1592754329.804069, 1592754329.804073, 1592754330.287781, 1592754330.287791, 1592754330.526794, 1592754330.526849, 1592754331.576584, 1592754331.576596, 1592754332.515501, 1592754332.516012, 1592754339.229438, 1592754339.229441, 1592754339.229511, 1592754339.23021, 1592754339.230248, 1592754339.230251, 1592754340.226757, 1592754340.226786, 1592754340.226797, 1592754346.628815]
-default length sequence: [171, -1370, -2576, 93, -69, 616, -1308, 394, 243, 1350, 300, 1350, 1350, 1350, 1350, 1350, 1350, 958]
-default timestamp sequence: [1592754329.50862, 1592754329.508629, 1592754329.803942, 1592754329.804073, 1592754330.287781, 1592754330.287791, 1592754330.526794, 1592754331.576584, 1592754331.576596, 1592754332.515501, 1592754332.516012, 1592754339.229441, 1592754339.229511, 1592754339.23021, 1592754339.230248, 1592754339.230251, 1592754340.226757, 1592754340.226786]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53', '49195']}
-Flow ('1592754322_clear.pcap', 'tcp', '5') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48946
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60, -52, 40]
-ip packets timestamps: [1592754329.508608, 1592754347.906984, 1592754347.906993]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
-Flow ('1592754322_clear.pcap', 'tcp', '6') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48947
-dport: 443
-payload lengths : [171, -1370, -2577, 93, 858, -69, -51, 38]
-payload timestamps: [1592754344.451484, 1592754344.451513, 1592754344.936801, 1592754344.936858, 1592754345.327136, 1592754345.969206, 1592754345.969217, 1592754345.96924]
-ip packets lengths: [60, -52, 40, 211, -1410, 40, -2617, 40, 133, 898, -109, 52, -91, 52, 40, 78, 40, -40, 40]
-ip packets timestamps: [1592754329.50861, 1592754344.451474, 1592754344.451477, 1592754344.451484, 1592754344.451513, 1592754344.451556, 1592754344.936801, 1592754344.936848, 1592754344.936858, 1592754345.327136, 1592754345.969206, 1592754345.969212, 1592754345.969217, 1592754345.969223, 1592754345.969234, 1592754345.96924, 1592754346.914094, 1592754347.906683, 1592754347.906956]
-default length sequence: [171, -1370, -2577, 93, 858, -69, -51, 38]
-default timestamp sequence: [1592754344.451484, 1592754344.451513, 1592754344.936801, 1592754344.936858, 1592754345.327136, 1592754345.969206, 1592754345.969217, 1592754345.96924]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53', '49195']}
-Flow ('1592754322_clear.pcap', 'tcp', '7') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48948
-dport: 443
-payload lengths : [171]
-payload timestamps: [1592754330.287831]
-ip packets lengths: [60, -52, 40, 211, 40]
-ip packets timestamps: [1592754329.508612, 1592754330.287811, 1592754330.287821, 1592754330.287831, 1592754346.914096]
-default length sequence: [171]
-default timestamp sequence: [1592754330.287831]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53']}
-Flow ('1592754322_clear.pcap', 'tcp', '8') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48949
-dport: 443
-payload lengths : [171, -1370, -1370, -1207, 93, 139, -51]
-payload timestamps: [1592754330.28787, 1592754330.527589, 1592754330.582973, 1592754330.583013, 1592754330.583568, 1592754330.58357, 1592754333.506779]
-ip packets lengths: [60, -52, 40, 211, -1410, 40, -1410, 40, -1247, 40, 133, 179, -91, 40]
-ip packets timestamps: [1592754329.508614, 1592754330.287841, 1592754330.287851, 1592754330.28787, 1592754330.527589, 1592754330.527602, 1592754330.582973, 1592754330.58301, 1592754330.583013, 1592754330.583559, 1592754330.583568, 1592754330.58357, 1592754333.506779, 1592754333.506783]
-default length sequence: [171, -1370, -1370, -1207, 93, 139, -51]
-default timestamp sequence: [1592754330.28787, 1592754330.527589, 1592754330.582973, 1592754330.583013, 1592754330.583568, 1592754330.58357, 1592754333.506779]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53', '49195']}
-Flow ('1592754322_clear.pcap', 'tcp', '9') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48950
-dport: 443
-payload lengths : [171, -1370, -1024]
-payload timestamps: [1592754330.287326, 1592754334.876491, 1592754346.913975]
-ip packets lengths: [60, -52, 40, 211, -40, -1410, 40, -1064, 40, 40]
-ip packets timestamps: [1592754329.508626, 1592754329.804079, 1592754329.804081, 1592754330.287326, 1592754330.28786, 1592754334.876491, 1592754334.876499, 1592754346.913975, 1592754346.914091, 1592754346.914103]
-default length sequence: [171, -1370, -1024]
-default timestamp sequence: [1592754330.287326, 1592754334.876491, 1592754346.913975]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53', '49195']}
-Flow ('1592754322_clear.pcap', 'tcp', '10') info:
-src ip: 10.82.8.58
-dst ip: 87.240.137.206
-sport: 48951
-dport: 443
-payload lengths : [171, -1207]
-payload timestamps: [1592754344.936896, 1592754345.968844]
-ip packets lengths: [60, -52, 40, 211, -40, -1247, 52, 52, -40, 40]
-ip packets timestamps: [1592754329.804071, 1592754344.936877, 1592754344.936887, 1592754344.936896, 1592754345.327138, 1592754345.968844, 1592754345.969199, 1592754346.914101, 1592754347.906966, 1592754347.906975]
-default length sequence: [171, -1207]
-default timestamp sequence: [1592754344.936896, 1592754345.968844]
-extension: {'tls.handshake.extensions_server_name': ['api.vk.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53']}
-Flow ('1592754322_clear.pcap', 'tcp', '11') info:
-src ip: 10.82.8.58
-dst ip: 172.217.160.74
-sport: 49262
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60]
-ip packets timestamps: [1592754330.287801]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
+extension: {'tls.handshake.extensions_server_name': ['', '', '', 'api.vk.com', '', '', '', '', '', '', '']}
 Flow ('1592754322_clear.pcap', 'tcp', '12') info:
 src ip: 10.82.8.58
 dst ip: 95.142.206.2
@@ -295,7 +223,7 @@ ip packets lengths: [60, -52, 40, 220, -1410, 52, 40, -1273, 40, 40]
 ip packets timestamps: [1592754341.157658, 1592754342.157711, 1592754342.15772, 1592754342.15773, 1592754343.802529, 1592754343.802537, 1592754346.326723, 1592754346.628824, 1592754346.628826, 1592754346.914098]
 default length sequence: [180, -1370, -1233]
 default timestamp sequence: [1592754342.15773, 1592754343.802529, 1592754346.628824]
-extension: {'tls.handshake.extensions_server_name': ['sun6-16.userapi.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53']}
+extension: {'tls.handshake.extensions_server_name': ['', '', '', 'sun6-16.userapi.com', '', '', '', '', '', '']}
 Flow ('1592754322_clear.pcap', 'tcp', '13') info:
 src ip: 10.82.8.58
 dst ip: 95.142.206.2
@@ -307,30 +235,7 @@ ip packets lengths: [60, -52, 40, 220, -40, 40, -1272, 40]
 ip packets timestamps: [1592754341.157667, 1592754343.802553, 1592754343.80256, 1592754344.451241, 1592754344.451464, 1592754346.914105, 1592754347.906631, 1592754347.906653]
 default length sequence: [180, -1232]
 default timestamp sequence: [1592754344.451241, 1592754347.906631]
-extension: {'tls.handshake.extensions_server_name': ['sun6-16.userapi.com'], 'tls.handshake.ciphersuite': ['49195,49196,52393,49199,49200,52392,49171,49172,156,157,47,53']}
-Flow ('1592754322_clear.pcap', 'tcp', '14') info:
-src ip: 10.82.8.58
-dst ip: 69.171.228.20
-sport: 49675
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60]
-ip packets timestamps: [1592754347.906664]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
-Flow ('1592754322_clear.pcap', 'tcp', '15') info:
-src ip: 10.82.8.58
-dst ip: 69.171.228.20
-sport: 49676
-dport: 443
-payload lengths : []
-payload timestamps: []
-ip packets lengths: [60]
-ip packets timestamps: [1592754347.906674]
-default length sequence: []
-default timestamp sequence: []
-extension: {}
+extension: {'tls.handshake.extensions_server_name': ['', '', '', 'sun6-16.userapi.com', '', '', '', '']}
+
 ```
 
