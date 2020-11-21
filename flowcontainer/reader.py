@@ -1,7 +1,13 @@
 import numpy as np
 import warnings
 from subprocess import Popen, PIPE
+import os
+import re
 
+__flag__ = None
+__tshark_min_version__ = '2.6.0'
+__tshark_current_version__  = ''
+__numpy_min_version__ = '1.18.0'
 class Reader(object):
     """Reader object for extracting features from .pcap files
 
@@ -78,14 +84,32 @@ class Reader(object):
 
         # Check if we can use fast tshark read or slow pyshark read
         try:
+            if  os.path.exists(path) == False:
+                raise FileExistsError('file {0} does not exist.'.format(path))
+
+            if __flag__ == None:
+                # Call Tshark on packets
+                command = 'tshark -v'
+                process = Popen(command, stdout=PIPE, stderr=PIPE)
+                # Get output
+                out, err = process.communicate()
+                if err :
+                    raise  EnvironmentError('tshark is not installed or added to environment path.')
+                head = out.decode("utf-8").split('\n')[0].strip()
+                version = re.findall('TShark \(Wireshark\) (.*?) \(',head,re.DOTALL)[0]
+                if version < __tshark_min_version__ :
+                    raise  EnvironmentError('the version of tshark (wireshark) should be greater than {1} at least, however the current version is {0}.'.format(version,__tshark_min_version__))
+                __tshark_current_version__ = version
+                if np.__version__ < __numpy_min_version__ :
+                    raise  EnvironmentError('the version of numpy should be greater than {1} at least, however the current version is {0}.'.format(np.__version__ , __numpy_min_version__))
+
+                __flag__ == object()
             return self.read_tshark(path,filter,extension,ip_layer)
         except Exception as ex:
-            warnings.warn("tshark error: '{}', defaulting to pyshark backend. "
-                          "note that the pyshark backend is much slower than "
-                          "the tshark backend."
+            if isinstance(ex,EnvironmentError):
+                raise EnvironmentError(ex)
+            warnings.warn("Running Error : tshark parse error : '{0}'."
                           .format(ex))
-            #raise ex
-
 
     def read_tshark(self, path,filter_str="",extension="",ip_layer =False):
         """Read TCP and UDP packets from file given by path using tshark backend

@@ -1,6 +1,6 @@
 __author__ = 'dk'
 from flowcontainer.extractor import extract
-result = extract(r"./tls.pcap",filter='',extension=[],ip_layer= False)
+result = extract(r"1592754322_clear.pcap",filter='(tcp or udp)',extension=['tls.handshake.certificate'])
 
 for key in result:
     ### The return vlaue result is a dict, the key is a tuple (filename,procotol,stream_id)
