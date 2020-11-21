@@ -2,7 +2,9 @@
 flowcontainer是基于python3的网络流量基本信息提取库，以方便完成网络流量的分析任务。给定pcap文件，该库会提取pcap所有的流的相关信息，其中流信息包括：流的源端口、源IP、目的IP、目的端口、IP数据包的长度序列、IP数据集的到达时间序列、有效载荷序列以及相应有效载荷的到达时间序列、等扩展信息。库会对IP数据包做过滤，那些tcp/udp载荷不为0的数据包会统计到有效载荷序列里面。工具简单易用，扩展性和复用性高。
 # 博客地址
 [flowcontainer: 基于python3的网络流量特征信息提取库](https://blog.csdn.net/jmh1996/article/details/107148871)
+
 url: https://blog.csdn.net/jmh1996/article/details/107148871
+
 【github有时解析markdown里面的公式出错，因此请移步博客，获取更好的文档阅读体验】
 # 库的安装
 最新版：
