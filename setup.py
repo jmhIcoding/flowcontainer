@@ -12,7 +12,7 @@ Fix bugs:\n
 
 setuptools.setup(
     name="flowcontainer",
-    version="3.7",
+    version="3.8",
     author="Minghao Jiang",
     author_email="jiangminghao@iie.ac.cn",
     description="A python lib to parse traffic flow information from pcaps",

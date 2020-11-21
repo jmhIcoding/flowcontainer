@@ -75,7 +75,7 @@ class Flow(object):
 
         # Refer the main property
         self.lengths = self.payload_lengths if main=='payload' else self.ip_lengths
-        self.timestamps = self.payload_timestamps if main=='payload' else self.ip
+        self.timestamps = self.payload_timestamps if main=='payload' else self.ip_timestamps
     ########################################################################
     #                        Add new packet to flow                        #
     ########################################################################
