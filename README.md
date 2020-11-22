@@ -54,10 +54,11 @@ ValueError: invalid literal for int() with base 10: ''
 
 
 
-- 打开pcap文件，同时设置过滤规则和过滤规则。
+- 打开pcap文件，同时设置过滤规则和扩展规则。
 
 **flowcontainer默认滤除重传、乱序数据包、mdns、ssdp、icmp数据包，默认只保留IP数据包。
-flowcontainer默认提取流的：源IP，源端口，目的IP，目的端口，IP包长序列，IP包到达时间序列，载荷长度序列，载荷到达时间序列。**
+flowcontainer默认提取流的：源IP，源端口，目的IP，目的端口，IP包长序列，IP包到达时间序列，流到达时间戳、流结束时间戳、载荷长度序列，载荷到达时间序列。**
+
 
 `extract`函数接受3个参数：`infile,filter,extension`。
 
@@ -66,6 +67,7 @@ flowcontainer默认提取流的：源IP，源端口，目的IP，目的端口，
 `filter` 用于添加包过滤规则，过滤规则的语义和语法规则与wireshark严格保持一致。可以为空。
 `extension` 是用于需要提取的额外的扩展字段，字段语义和语法规则也与wireshark严格保持一致。可以为空。
 
+**flowcontainer 兼容wireshark所有特殊扩展字段提取，例如X509证书、SNI、SSL的ciphersuites、tcp载荷、udp载荷、ipid字段等等。**
 
 ```python
 __author__ = 'dk'
@@ -117,7 +119,7 @@ for key in result:
 	print('start timestamp :',value.time_start)
 	print('end timestamp :',value.time_end)
 ```
-需要注意的是，这里流的开始时间和结束时间是基于默认的时间戳【目前是有效载荷序列的时间戳，而不是IP数据包的时间戳】来计算的。
+需要注意的是，这里流的开始时间和结束时间是基于默认的时间戳 **【目前是有效载荷序列的时间戳，而不是IP数据包的时间戳】** 来计算的。其中`time_start` 通过`min(value.timestamps)` 得到，而`time_end` 通过 `max(value.timestamps)`得到。
 
 - **访问IP包长度序列和到达时间序列**
 
@@ -144,7 +146,10 @@ for key in result:
 ```
 值得注意的是，extension是一个dict，里面的key就是用户自己指定的extension里面的各个item。而每个key对应的value是一个list,表示在整条里面用户需要的extension所出现过的取值。**list的长度与ip包长序列【并不是载荷长度序列】的长度是一样的，表示对于每个ip packet都会提取extension所需的字段，如果当前ip packet没有这个字段，那么该字段的取值为空字符串`''`，否则为实际的取值。之所以保留空字符串，是方便IP长度与扩展之间的对齐，实际使用中如果不需要此类对齐信息，请注意过滤list里面的空字符串。**
 
-此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取**。
+例如SSL握手阶段的ciphersuites，既有client 到server提供的ciphersuites，也有服务器最终选择的ciphersuites。因此需要通过联合判断ciphersuites所在packet的方向（outgoing 还是incoming） 才能知道ciphersuites到底是那一侧的取值。
+
+
+此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
 
 常见扩展字段：
 
@@ -155,7 +160,6 @@ for key in result:
 |x509证书|tls.handshake.certificate|tshark版本 $\ge$ 3.0.0|
 |udp载荷|udp.payload|tshark版本 $\ge$ **3.3.0**|
 |tcp载荷|tcp.payload|无|
-
 
 # 示例输出：
 代码：
