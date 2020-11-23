@@ -89,7 +89,7 @@ class Reader(object):
 
             if __flag__ == None:
                 # Call Tshark on packets
-                command = 'tshark -v'
+                command = ['tshark','-v']
                 try:
                     process = Popen(command, stdout=PIPE, stderr=PIPE)
                     # Get output
