@@ -1,11 +1,13 @@
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-import glob
 import numpy as np
-import os
-import pyshark
 import warnings
 from subprocess import Popen, PIPE
+import os
+import re
+
+__flag__ = None
+__tshark_min_version__ = '2.6.0'
+__tshark_current_version__  = ''
+__numpy_min_version__ = '1.18.0'
 
 class Reader(object):
     """Reader object for extracting features from .pcap files
@@ -35,10 +37,8 @@ class Reader(object):
     #                             Read method                              #
     ########################################################################
 
-    def read(self, path,filter="",extension=""):
+    def read(self, path,filter="",extension="",ip_layer =False):
         """Read TCP and UDP packets from .pcap file given by path.
-            Automatically choses fastest available backend to use.
-
             Parameters
             ----------
             path : string
@@ -53,6 +53,9 @@ class Reader(object):
                 If type(extension) is string, then only one extra field will be extracted.
                 If type(extension) is list of string, then multi fileds will be extracted.
 
+            ip_layer : boolean
+                Whether parse protocols on ip layer such pptp, l2tp etc.
+
             Returns
             -------
             result : np.array of shape=(n_packets, n_features)
@@ -67,9 +70,8 @@ class Reader(object):
                 6) IP packet destination
                 7) TCP/UDP packet source port
                 8) TCP/UDP packet destination port
-                9) TCP length
-                10) UDP length
-                11) extension(s)
+                9) Payload length of  TCP/UDP
+                10) extension(s)
 
             Warning
             -------
@@ -81,18 +83,37 @@ class Reader(object):
         if self.verbose:
             print("Reading {}...".format(path))
 
-        # Check if we can use fast tshark read or slow pyshark read
+        # Check if tshark configs well enough
         try:
-            return self.read_tshark(path,filter,extension)
+            if  os.path.exists(path) == False:
+                raise FileExistsError('file {0} does not exist.'.format(path))
+
+            if __flag__ == None:
+                # Call Tshark on packets
+                command = ['tshark','-v']
+                try:
+                    process = Popen(command, stdout=PIPE, stderr=PIPE)
+                    # Get output
+                    out, err = process.communicate()
+                except :
+                    raise  EnvironmentError('tshark is not installed or added to environment path.')
+                head = out.decode("utf-8").split('\n')[0].strip()
+                version = re.findall('TShark \(Wireshark\) (.*?) \(',head,re.DOTALL)[0]
+                if version < __tshark_min_version__ :
+                    raise  EnvironmentError('the version of tshark (wireshark) should be greater than {1} at least, however the current version is {0}.'.format(version,__tshark_min_version__))
+                __tshark_current_version__ = version
+                if np.__version__ < __numpy_min_version__ :
+                    raise  EnvironmentError('the version of numpy should be greater than {1} at least, however the current version is {0}.'.format(np.__version__ , __numpy_min_version__))
+
+                __flag__ == object()
+            return self.read_tshark(path,filter,extension,ip_layer)
         except Exception as ex:
-            warnings.warn("tshark error: '{}', defaulting to pyshark backend. "
-                          "note that the pyshark backend is much slower than "
-                          "the tshark backend."
+            if isinstance(ex,EnvironmentError):
+                raise EnvironmentError(ex)
+            warnings.warn("Running Error : tshark parse error : '{0}'."
                           .format(ex))
-            raise ex
 
-
-    def read_tshark(self, path,filter_str="",extension=""):
+    def read_tshark(self, path,filter_str="",extension="",ip_layer =False):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -104,7 +125,6 @@ class Reader(object):
             -------
             result : np.array of shape=(n_packets, n_features)
                 Where features consist of:
-
                 0) Filename of capture
                 1) Protocol TCP/UDP
                 2) TCP/UDP stream identifier
@@ -114,12 +134,12 @@ class Reader(object):
                 6) IP packet destination
                 7) TCP/UDP packet source port
                 8) TCP/UDP packet destination port
-                9) SSL/TLS certificate if exists, else None
-                10) TCP length
-                11) UDP length
+                9) Payload length
+                10) extension fields
             """
         # Create Tshark command
-        command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
+        if ip_layer == False:
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
                    "-e", "udp.stream", #only output one line
@@ -135,12 +155,30 @@ class Reader(object):
                    "-e", "udp.length",   #only output one line,
                    "-e", 'ip.id',
                    "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
+        else:
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
+                   "-e", "frame.time_epoch",
+                   "-e", "tcp.stream",
+                   "-e", "udp.stream", #only output one line
+                   "-e", "ip.proto",
+                   "-e", "ip.src",
+                   "-e", "tcp.srcport",
+                   "-e", "udp.srcport", #only output one line
+                   "-e", "ip.dst",
+                   "-e", "tcp.dstport",
+                   "-e", "udp.dstport", #only output one line
+                   "-e", "ip.len",
+                   '-e', "tcp.len",
+                   "-e", "udp.length",   #only output one line,
+                   "-e", 'ip.id',
+                   "-2","-R", "ip and not icmp{0}"]
+
         if filter_str != "":
             command[-1] = command[-1].format(" and "+filter_str)
         else:
             command[-1] = command[-1].format("")
         #Add extension fields
-        if type(extension)== type(""):
+        if type(extension) == type(""):
             extension  = [extension]
 
         for each in extension:
@@ -162,7 +200,7 @@ class Reader(object):
         if err:
             warnings.warn("Error reading file: '{}'".format(
                 err.decode('utf-8')))
-        protocols = {'17': 'udp', '6': 'tcp'}
+        protocols = {'17': 'udp', '6': 'tcp','47':'gre'}
         # Read each packet
         for packet in filter(None, out.decode('utf-8').split('\n')):
             # Get all data from packets
@@ -182,11 +220,12 @@ class Reader(object):
 
             # Add packet to result
             #路径|tcp(udp)|flowid|时间戳|IP长度|srcIP|dstIP|srcport|dstport|payload长度|extension|
-            if packet[3]=='tcp':
+            if packet[3]=='tcp' and ip_layer == False:
                 result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
-            else:
+            elif packet[3]=='udp' and ip_layer == False:
                 result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
-
+            else:   #非tcp,udp协议,那就只提取ip-len。对于此类flowid填0,源端口填1,目的端口填0
+                result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[10],packet[13:-1]])
             #print(result[-1])
 
         # Get result as numpy array

@@ -33,7 +33,7 @@ class FlowGenerator(object):
         #Remove empty payload flow
         insuitable_flow = list()
         for each in result:
-            if len(result[each].payload_lengths) <= 10 :
+            if len(result[each].payload_lengths) <= 0 :
                 insuitable_flow.append(each)
         for each in insuitable_flow:
             result.pop(each)

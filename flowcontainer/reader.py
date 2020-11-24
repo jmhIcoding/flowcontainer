@@ -8,6 +8,7 @@ __flag__ = None
 __tshark_min_version__ = '2.6.0'
 __tshark_current_version__  = ''
 __numpy_min_version__ = '1.18.0'
+
 class Reader(object):
     """Reader object for extracting features from .pcap files
 
@@ -38,8 +39,6 @@ class Reader(object):
 
     def read(self, path,filter="",extension="",ip_layer =False):
         """Read TCP and UDP packets from .pcap file given by path.
-            Automatically choses fastest available backend to use.
-
             Parameters
             ----------
             path : string
@@ -53,6 +52,9 @@ class Reader(object):
                 The field name is consistent with that of Wireshark, such as tls.handshake.extension_server_name means the SNI of TLS flow.
                 If type(extension) is string, then only one extra field will be extracted.
                 If type(extension) is list of string, then multi fileds will be extracted.
+
+            ip_layer : boolean
+                Whether parse protocols on ip layer such pptp, l2tp etc.
 
             Returns
             -------
@@ -68,9 +70,8 @@ class Reader(object):
                 6) IP packet destination
                 7) TCP/UDP packet source port
                 8) TCP/UDP packet destination port
-                9) TCP length
-                10) UDP length
-                11) extension(s)
+                9) Payload length of  TCP/UDP
+                10) extension(s)
 
             Warning
             -------
@@ -82,7 +83,7 @@ class Reader(object):
         if self.verbose:
             print("Reading {}...".format(path))
 
-        # Check if we can use fast tshark read or slow pyshark read
+        # Check if tshark configs well enough
         try:
             if  os.path.exists(path) == False:
                 raise FileExistsError('file {0} does not exist.'.format(path))
@@ -124,7 +125,6 @@ class Reader(object):
             -------
             result : np.array of shape=(n_packets, n_features)
                 Where features consist of:
-
                 0) Filename of capture
                 1) Protocol TCP/UDP
                 2) TCP/UDP stream identifier
@@ -134,9 +134,8 @@ class Reader(object):
                 6) IP packet destination
                 7) TCP/UDP packet source port
                 8) TCP/UDP packet destination port
-                9) SSL/TLS certificate if exists, else None
-                10) TCP length
-                11) UDP length
+                9) Payload length
+                10) extension fields
             """
         # Create Tshark command
         if ip_layer == False:

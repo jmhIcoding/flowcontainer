@@ -34,18 +34,21 @@ class Flow(object):
         time_end : int
             Timestamp of last packet in flow
 
-        certificate : Object
-            Certificate of flow, if any
-
         ip_lengths : list
             List of packet length for each ip packet in flow
+
         payload_lengths : list
             List of payload sequence for each tcp/udp fragment with non-zero payload in flow.
+
         ip_timestamps : list
             List of timestamps corresponding to each ip packet in flow, it may contain packets without any tcp/udp payload.
 
         payload_timestamps: list
             List of timestamps corresponding to each tcp/udp fragment with non-zero payload in flow.
+
+        extension : dict
+            Dict of extension, where the keys are items which are passed through flowcontainer.extractor.extract functions.
+            the values `extension[key]` are list of tuple, where each tuple is (value,packet_id).
     """
 
     def __init__(self,main='payload'):
@@ -98,12 +101,12 @@ class Flow(object):
             # Extract IPs from packet
             ip_a, ip_b = packet[5], packet[6]
         except BaseException as exp:
-            raise ValueError('This is not ip packet.')
+            raise ValueError('Parse ip address error, this is not ip packet! Please pass the filter parameter with `(tcp or udp)` when invoke flowcontainer.extractor.extract()!')
         try:
             # Extract ports from packet
             port_a, port_b = int(packet[7]), int(packet[8])
         except BaseException as exp:
-            raise ValueError('This ip packet is not sample of tcp or udp or gre.')
+            raise ValueError('Parse TCP/UDP port error, this ip packet may not be a sample of tcp or udp or gre. Please pass the filter parameter with `(tcp or udp)` when invoke flowcontainer.extractor.extract()!')
         # Perform packet check
         if self.src is not None:
             if {self.src, self.dst} != {ip_a, ip_b} and {self.sport, self.dport} != {port_a, port_b}:
@@ -118,10 +121,10 @@ class Flow(object):
 
         # Add extension if any
         for i in range(len(packet[-1])):
-            #if packet[-1][i] != "":
+            if packet[-1][i] != "":
                 if extension[i] not in self.extension:
                     self.extension.setdefault(extension[i],[])
-                self.extension[extension[i]].append(packet[-1][i])
+                self.extension[extension[i]].append((packet[-1][i],len(self.ip_lengths)))
 
 
         # Set timestamps and lengths
@@ -130,9 +133,12 @@ class Flow(object):
         self.ip_lengths   .append( int(packet[4]) if packet[5] == self.src else
                                -int(packet[4]))
         if int(packet[9]) != 0:
-            self.payload_lengths.append( int(packet[9]) if packet[5] == self.src else
-                               -int(packet[9]))
-            self.payload_timestamps.append(float(packet[3]))
+            try:
+                self.payload_lengths.append( int(packet[9]) if packet[5] == self.src else
+                                   -int(packet[9]))
+                self.payload_timestamps.append(float(packet[3]))
+            except BaseException as exp:
+                raise ValueError('Parser payload length and timestamp error, this ip packet may not be a sample of tcp or udp. Please pass the filter parameter with `(tcp or udp)` when invoke flowcontainer.extractor.extract()!')
 
         # Return self
         return self
