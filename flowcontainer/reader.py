@@ -182,7 +182,9 @@ class Reader(object):
             extension  = [extension]
 
         for each in extension:
-            if each!="":
+            if each != "" :
+                if each in command :
+                    raise ValueError('The extension field `{0}` has been extracted more than once at least! Please check your extension parameter!'.format(each))
                 command.insert(-5,'-e')
                 command.insert(-5,each)
         #print(" ".join(command))
