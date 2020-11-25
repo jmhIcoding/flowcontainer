@@ -98,7 +98,7 @@ class Reader(object):
                 except :
                     raise  EnvironmentError('tshark is not installed or added to environment path.')
                 head = out.decode("utf-8").split('\n')[0].strip()
-                version = re.findall('TShark \(Wireshark\) (.*?) \(',head,re.DOTALL)[0]
+                version = re.findall('([0-9]+\.[0-9]+\.[0-9]+)',head,re.DOTALL)[0]
                 if version < __tshark_min_version__ :
                     raise  EnvironmentError('the version of tshark (wireshark) should be greater than {1} at least, however the current version is {0}.'.format(version,__tshark_min_version__))
                 __tshark_current_version__ = version
