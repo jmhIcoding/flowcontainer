@@ -2,6 +2,7 @@
 flowcontainer是基于python3的网络流量基本信息提取库，以方便完成网络流量的分析任务。给定pcap文件，该库会提取pcap所有的流的相关信息，其中流信息包括：流的源端口、源IP、目的IP、目的端口、IP数据包的长度序列、IP数据集的到达时间序列、有效载荷序列以及相应有效载荷的到达时间序列、等扩展信息。库会对IP数据包做过滤，那些tcp/udp载荷不为0的数据包会统计到有效载荷序列里面。工具简单易用，扩展性和复用性高。
 # 博客地址
 [flowcontainer: 基于python3的网络流量特征信息提取库](https://blog.csdn.net/jmh1996/article/details/107148871)
+
 url: https://blog.csdn.net/jmh1996/article/details/107148871
 
 【github有时解析markdown里面的公式出错，因此请移步博客，获取更好的文档阅读体验】
@@ -112,6 +113,8 @@ for key in result:
     ## access payload packet timestamps sequence:
     print('payload timestamps:',value.payload_timestamps)
 ```
+包长序列是带正负号的，正负号用于标识数据包是客户端发往服务端还是由服务端发往客户端。正数标识C->S的数据包，负数标识S->C 的数据包。
+
 - **访问流的开始时间和结束时间**
 
 ```python
@@ -130,6 +133,8 @@ for key in result:
     ## access ip packet timestamp sequence, (including packets with zero payload)
     print('ip packets timestamps:',value.ip_timestamps)
 ```
+包长序列是带正负号的，正负号用于标识数据包是客户端发往服务端还是由服务端发往客户端。正数标识C->S的数据包，负数标识S->C 的数据包。
+
 - **访问默认序列信息，默认是载荷序列信息**
 ```python
     ## access default lengths sequence, the default length sequences is the payload lengths sequences
@@ -170,10 +175,6 @@ extension是一个字典，key就是传入的`tls.handshake.ciphersuite`，而va
 在这条流里面，第3个IP数据包出现了ciphersuites,然后ciphersuites的取值是`'49195,49196,52393,49199,49200,52392,49161,49162,49171,49172,156,157,47,53'`，通过查看ip长度序列可知第三个长度是232（下标从0计数），这是一个由客户端发送给服务端的outgoing数据包，因此这是c2s的加密套件。
 第二个取值`('49195', 5)` ,表示这条流的第5个IP数据包出现了ciphersuits，而且取值为49195，查IP长度序列可知它对应长度是 -1476，这是一个由服务器响应而来的数据包，因此这个ciphersuits就是服务器选择的加密套件。
 
-
-
-此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
-
 常见扩展字段：
 
 | 字段名 | extension取值 |备注|
@@ -184,6 +185,7 @@ extension是一个字典，key就是传入的`tls.handshake.ciphersuite`，而va
 |udp载荷|udp.payload|tshark版本 $\ge$ **3.3.0**|
 |tcp载荷|tcp.payload|无|
 
+此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
 # 示例输出：
 代码：
 ```python
