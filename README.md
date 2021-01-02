@@ -3,6 +3,7 @@ flowcontainer是基于python3的网络流量基本信息提取库，以方便完
 # 博客地址
 [flowcontainer: 基于python3的网络流量特征信息提取库](https://blog.csdn.net/jmh1996/article/details/107148871)
 url: https://blog.csdn.net/jmh1996/article/details/107148871
+
 【github有时解析markdown里面的公式出错，因此请移步博客，获取更好的文档阅读体验】
 # 库的安装
 最新版：
@@ -136,6 +137,7 @@ for key in result:
     ## access default timestamp sequence, the default timestamp sequence is the payload timestamp sequences
     print('default timestamp sequence:',value.timestamps)
 ```
+包长序列是带正负号的，正负号用于标识数据包是客户端发往服务端还是由服务端发往客户端。正数标识C->S的数据包，负数标识S->C 的数据包。
 
 - **访问扩展字段**
 ```python
@@ -253,7 +255,14 @@ default length sequence: [180, -1424, -1440, -190, 126, -274, 625, -1163, 31, -3
 default timestamp sequence: [1592993502.710372, 1592993502.710383, 1592993502.71261, 1592993502.712895, 1592993502.993892, 1592993502.993903, 1592993503.234192, 1592993504.233002, 1592993527.490709, 1592993527.49081]
 start timestamp:1592993502.710372, end timestamp :1592993527.49081
 extension: {'tls.handshake.ciphersuite': [('49195,49196,52393,49199,49200,52392,49161,49162,49171,49172,156,157,47,53', 3), ('49195', 5)]}
-
-
 ```
+
+# 安装人数统计
+从pypi可以查询到每个月通过pip安装flowcontainer的人数信息：
+|下载数| 月份 |
+|--|--|
+|  1944|2020-11  |
+|1315|2020-10|
+|1196|2020-09|
+
 
