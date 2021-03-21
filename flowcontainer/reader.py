@@ -142,17 +142,17 @@ class Reader(object):
             command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
-                   "-e", "udp.stream", #only output one line
+                   "-e", "udp.stream",
                    "-e", "ip.proto",
                    "-e", "ip.src",
                    "-e", "tcp.srcport",
-                   "-e", "udp.srcport", #only output one line
+                   "-e", "udp.srcport",
                    "-e", "ip.dst",
                    "-e", "tcp.dstport",
-                   "-e", "udp.dstport", #only output one line
+                   "-e", "udp.dstport",
                    "-e", "ip.len",
                    '-e', "tcp.len",
-                   "-e", "udp.length",   #only output one line,
+                   "-e", "udp.length",
                    "-e", 'ip.id',
                    "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
         else:

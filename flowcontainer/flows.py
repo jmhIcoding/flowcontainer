@@ -178,13 +178,13 @@ class Flow(object):
     def __str__(self):
         """Return string representation of flow."""
         if self.main=='ip':
-            return "[Time {} to {}] {:>15}:{:<5} <-> {:>15}:{:<5} [IP Packet Size Length {}] [SNI: {}]".format(
+            return "[Time {} to {}] {:>15}:{:<5} <-> {:>15}:{:<5} [IP Packet Size Length {}] [extension: {}]".format(
                 datetime.fromtimestamp(min(self.timestamps)).strftime("%H:%M:%S.%f"),
                 datetime.fromtimestamp(max(self.timestamps)).strftime("%H:%M:%S.%f"),
                 self.src, self.sport, self.dst, self.dport,
                 len(self),self.extension)
         else:
-            return "[Time {} to {}] {:>15}:{:<5} <-> {:>15}:{:<5} [Payload Packet Size Length {}] [SNI: {}]".format(
+            return "[Time {} to {}] {:>15}:{:<5} <-> {:>15}:{:<5} [Payload Packet Size Length {}] [extension: {}]".format(
                 datetime.fromtimestamp(min(self.timestamps)).strftime("%H:%M:%S.%f"),
                 datetime.fromtimestamp(max(self.timestamps)).strftime("%H:%M:%S.%f"),
                 self.src, self.sport, self.dst, self.dport,
