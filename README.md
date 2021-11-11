@@ -43,7 +43,7 @@ pip3 install flowcontainer
 if int(packet[9]) != 0:
 ValueError: invalid literal for int() with base 10: ''
 ```
-解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，重复提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
 
 此ISSUE 致谢：宝哥
 
