@@ -7,14 +7,12 @@ url: https://blog.csdn.net/jmh1996/article/details/107148871
 
 【github有时解析markdown里面的公式出错，因此请移步博客，获取更好的文档阅读体验】
 # 库的安装
-最新版：
-```bash
-pip3 install git+https://github.com/jmhIcoding/flowcontainer.git
-```
-稳定版：
 ```bash
 pip3 install flowcontainer
 ```
+
+提示： github里面的代码特别古老了，pypi库里面是最新的，请使用pip3安装最新版。
+
 # 库的环境
 
 - python 3
