@@ -19,6 +19,8 @@ pip3 install flowcontainer
 - numpy>=18.1
 - 系统安装好wireshark的最新版本,并将tshark所在的目录添加到系统的环境目录。安装好wireshark就会顺带把tshark也安装好。
 
+** Wireshark 4.x 相比Wireshark 3.x做了重大变化，因此不要安装 4.x的wireshark,否则可能出错!**
+
 **如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。**
 
 **如果需要提取tls的sni,那么tshark的版本需要大于3.0.0。**
