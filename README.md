@@ -189,7 +189,7 @@ extension是一个字典，key就是传入的`tls.handshake.ciphersuite`，而va
 此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
 
 # 简单样例
-代码：
+下面的代码展示了flowcontainer 最基本的用法：
 ```python
 __author__ = 'dk'
 from flowcontainer.extractor import extract
@@ -259,6 +259,17 @@ default length sequence: [180, -1424, -1440, -190, 126, -274, 625, -1163, 31, -3
 default timestamp sequence: [1592993502.710372, 1592993502.710383, 1592993502.71261, 1592993502.712895, 1592993502.993892, 1592993502.993903, 1592993503.234192, 1592993504.233002, 1592993527.490709, 1592993527.49081]
 start timestamp:1592993502.710372, end timestamp :1592993527.49081
 extension: {'tls.handshake.ciphersuite': [('49195,49196,52393,49199,49200,52392,49161,49162,49171,49172,156,157,47,53', 3), ('49195', 5)]}
+```
+
+# 其他案例： example_code
+在example_code文件夹里面，有多个使用flowcontainer获取流量信息的案例。
+```
+├─easy_example.py 展示了如何获取网络流量的包长、包到达间隔等信息，这些信息对于开展加密网络流分析实验特别重要
+├─parse_very_large_pcap.py 展示了如何使用流量切分加速解析超大PCAP文件。
+├─http HTTP流量解析案例，案例展示了如何获取HTTP的User-agent, http-url等。
+├─dns  DNS流量解析案例，案例展示了如何解析DNS的A记录等。
+├─http HTTP流量解析案例，案例展示了如何获取HTTP的User-agent, http-url等。
+└─ssl SSL流量解析案例，案例展示了如何获取SNI、证书，以及如何解析流量中的X509证书。
 ```
 
 
