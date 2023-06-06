@@ -66,7 +66,8 @@ class Flow(object):
         self.sport = None
         self.dst   = None
         self.dport = None
-
+        self.protocol = None
+        self._ext_protocols = set()
         # Initialise extension
         self.extension = dict()
         # Initialise packet lengths
@@ -110,7 +111,7 @@ class Flow(object):
         # Perform packet check
         if self.src is not None:
             if {self.src, self.dst} != {ip_a, ip_b} and {self.sport, self.dport} != {port_a, port_b}:
-                raise ValueError("Packet {} incompatible with flow {}" .format(packet, self))
+                print("Packet {} incompatible with flow {}" .format(packet, self))
         # Set endpoints where smallest dport is destination
         elif port_a > port_b:
             self.src  , self.dst   = ip_a  , ip_b
@@ -118,9 +119,14 @@ class Flow(object):
         else:
             self.src  , self.dst   = ip_b  , ip_a
             self.sport, self.dport = port_b, port_a
-
+        if self.protocol is None:
+            self.protocol = packet[1][0]
+        self._ext_protocols.add(packet[1][1])
         # Add extension if any
-        for i in range(len(packet[-1])):
+        if len(packet[-1]) > len(extension):
+            ## means the separate "`" exists in the payload...
+            packet[-1][-1] = "`".join(packet[-1][len(extension)-1:])
+        for i in range(min(len(extension), len(packet[-1]))):
             if packet[-1][i] != "":
                 if extension[i] not in self.extension:
                     self.extension.setdefault(extension[i],[])
@@ -130,11 +136,11 @@ class Flow(object):
         # Set timestamps and lengths
         #print(packet)
         self.ip_timestamps.append(float(packet[3]))
-        self.ip_lengths   .append( int(packet[4]) if packet[5] == self.src else
+        self.ip_lengths   .append( int(packet[4]) if (packet[5], int(packet[7])) == (self.src, self.sport) else
                                -int(packet[4]))
         if int(packet[9]) != 0:
             try:
-                self.payload_lengths.append( int(packet[9]) if packet[5] == self.src else
+                self.payload_lengths.append( int(packet[9]) if (packet[5], int(packet[7])) == (self.src, self.sport) else
                                    -int(packet[9]))
                 self.payload_timestamps.append(float(packet[3]))
             except BaseException as exp:
@@ -161,7 +167,9 @@ class Flow(object):
     def time_start(self):
         """Returns start time of Flow"""
         return min(self.timestamps)
-
+    @property
+    def ext_protocol(self):
+        return "|".join(self._ext_protocols)
     @property
     def time_end(self):
         """Returns end time of Flow"""

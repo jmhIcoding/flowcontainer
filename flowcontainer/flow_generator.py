@@ -27,7 +27,7 @@ class FlowGenerator(object):
 
         # For each packet, add it to a flow
         for packet in packets:
-            key = (packet[0], packet[1], packet[2])
+            key = (packet[0], packet[1][0], packet[2])
             # Add packet to flow
             result[key] = result.get(key, Flow()).add(packet,extention)
         #Remove empty payload flow

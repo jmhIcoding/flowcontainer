@@ -6,6 +6,7 @@ import re
 
 __flag__ = None
 __tshark_min_version__ = '2.6.0'
+__tshark_max_version__ = '4.0.0'
 __tshark_current_version__  = ''
 __numpy_min_version__ = '1.18.0'
 
@@ -37,7 +38,7 @@ class Reader(object):
     #                             Read method                              #
     ########################################################################
 
-    def read(self, path,filter="",extension="",ip_layer =False):
+    def read(self, path,filter="",extension="",ip_layer =False, cmd_parameter = []):
         """Read TCP and UDP packets from .pcap file given by path.
             Parameters
             ----------
@@ -101,19 +102,21 @@ class Reader(object):
                 version = re.findall('([0-9]+\.[0-9]+\.[0-9]+)',head,re.DOTALL)[0]
                 if version < __tshark_min_version__ :
                     raise  EnvironmentError('the version of tshark (wireshark) should be greater than {1} at least, however the current version is {0}.'.format(version,__tshark_min_version__))
+                if version > __tshark_max_version__:
+                    raise EnvironmentError('the version of tshark (wireshark) should not be greater thant {1}, however the current version if {0}.'.format(version,__tshark_min_version__))
                 __tshark_current_version__ = version
                 if np.__version__ < __numpy_min_version__ :
                     raise  EnvironmentError('the version of numpy should be greater than {1} at least, however the current version is {0}.'.format(np.__version__ , __numpy_min_version__))
 
                 __flag__ == object()
-            return self.read_tshark(path,filter,extension,ip_layer)
+            return self.read_tshark(path,filter,extension,ip_layer, cmd_parameter)
         except Exception as ex:
             if isinstance(ex,EnvironmentError):
                 raise EnvironmentError(ex)
             warnings.warn("Running Error : tshark parse error : '{0}'."
                           .format(ex))
 
-    def read_tshark(self, path,filter_str="",extension="",ip_layer =False):
+    def read_tshark(self, path,filter_str="",extension="",ip_layer =False, cmd_parameter=[]):
         """Read TCP and UDP packets from file given by path using tshark backend
 
             Parameters
@@ -139,48 +142,59 @@ class Reader(object):
             """
         # Create Tshark command
         if ip_layer == False:
-            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
-                   "-e", "frame.time_epoch",
-                   "-e", "tcp.stream",
-                   "-e", "udp.stream",
-                   "-e", "ip.proto",
-                   "-e", "ip.src",
-                   "-e", "tcp.srcport",
-                   "-e", "udp.srcport",
-                   "-e", "ip.dst",
-                   "-e", "tcp.dstport",
-                   "-e", "udp.dstport",
-                   "-e", "ip.len",
-                   '-e', "tcp.len",
-                   "-e", "udp.length",
-                   "-e", 'ip.id',
-                   "-2","-R", "ip and not icmp and  not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
-        else:
-            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=+",
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=`",
                    "-e", "frame.time_epoch",
                    "-e", "tcp.stream",
                    "-e", "udp.stream", #only output one line
                    "-e", "ip.proto",
+                   "-e", "ipv6.nxt",  ##only output one line,
                    "-e", "ip.src",
+                   "-e", "ipv6.src",    #only output one line,
                    "-e", "tcp.srcport",
                    "-e", "udp.srcport", #only output one line
                    "-e", "ip.dst",
+                   "-e", "ipv6.dst",    #only output one line
                    "-e", "tcp.dstport",
                    "-e", "udp.dstport", #only output one line
                    "-e", "ip.len",
+                   "-e", "ipv6.plen",
                    '-e', "tcp.len",
                    "-e", "udp.length",   #only output one line,
                    "-e", 'ip.id',
-                   "-2","-R", "ip and not icmp{0}"]
+                   "-2","-R", "ip or ipv6 and not icmp and not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
+        else:
+            command = ["tshark", "-r", path, "-Tfields", "-E", "separator=`",
+                   "-e", "frame.time_epoch",
+                   "-e", "tcp.stream",
+                   "-e", "udp.stream", #only output one line
+                   "-e", "ip.proto",
+                   "-e", "ipv6.nxt",  ##only output one line,
+                   "-e", "ip.src",
+                   "-e", "ipv6.src",    #only output one line,
+                   "-e", "tcp.srcport",
+                   "-e", "udp.srcport", #only output one line
+                   "-e", "ip.dst",
+                   "-e", "ipv6.dst",    #only output one line
+                   "-e", "tcp.dstport",
+                   "-e", "udp.dstport", #only output one line
+                   "-e", "ip.len",
+                   "-e", "ipv6.plen",
+                   '-e', "tcp.len",
+                   "-e", "udp.length",   #only output one line,
+                   "-e", 'ip.id',
+                   "-2","-R", "ip or ipv6 and not icmp{0}"]
 
         if filter_str != "":
             command[-1] = command[-1].format(" and "+filter_str)
         else:
             command[-1] = command[-1].format("")
+
+        #Add extended protocols
+
         #Add extension fields
         if type(extension) == type(""):
             extension  = [extension]
-
+        extension =['_ws.col.Protocol'] + extension
         for each in extension:
             if each != "" :
                 if each in command :
@@ -189,7 +203,8 @@ class Reader(object):
                 command.insert(-5,each)
         #print(" ".join(command))
         # Initialise result
-
+        if len(cmd_parameter)>0 :
+            command+= cmd_parameter
 
         result = list()
 
@@ -204,35 +219,43 @@ class Reader(object):
                 err.decode('utf-8')))
         protocols = {'17': 'udp', '6': 'tcp','47':'gre'}
         # Read each packet
-        for packet in filter(None, out.decode('utf-8').split('\n')):
+        for packet in filter(None, out.decode('utf-8',errors="ignore").split('\n')):
             # Get all data from packets
             packet = packet.strip()
-            packet = packet.split('+')
-            #print(packet)
-            if len(packet) < 14: continue
+            packet = packet.split('`')
+            #print(len(packet), packet)
+            if len(packet) < 18:
+                continue
 
             # Perform check on multiple ip addresses
-            packet[3] = protocols.get(packet[3],'unknown')
-            packet[4] = packet[4].split(',')[0]             #ip.src
-            packet[7] = packet[7].split(',')[0]             #ip.dst
-            packet[10] = packet[10].replace(',', '')        #ip.len
+            protocol = protocols.get(packet[3],'unknown') if packet[3]!='' else protocols.get(packet[4],'unknown')
+            ip_src = packet[5].split(',')[0] if packet[5].split(',')[0]!= '' else packet[6].split(',')[0]            #ip.src
+            ip_dst = packet[9].split(',')[0] if packet[9].split(',')[0]!= '' else packet[10].split(',')[0]       #ip.dst
+            ip_len = packet[13].replace(',', '')  if  packet[13].replace(',', '')!='' else  packet[14].replace(',', '')      #ip.len
             #if packet[2]=='udp':
             #    print('#' * 10)
             #    print(packet)
 
             # Add packet to result
             #路径|tcp(udp)|flowid|时间戳|IP长度|srcIP|dstIP|srcport|dstport|payload长度|extension|
-            if packet[3]=='tcp' and ip_layer == False:
-                result.append([path]+[packet[3],packet[1],packet[0],packet[10],packet[4],packet[7],packet[5],packet[8],packet[11],packet[13:-1]])
-            elif packet[3]=='udp' and ip_layer == False:
-                result.append([path] +[packet[3],packet[2],packet[0],packet[10],packet[4],packet[7],packet[6],packet[9],packet[12],packet[13:-1]])
-            else:   #非tcp,udp协议,那就只提取ip-len。对于此类flowid填0,源端口填1,目的端口填0
-                result.append([path] +[packet[3],0,packet[0],packet[10],packet[4],packet[7],1,0,packet[10],packet[13:-1]])
-            #print(result[-1])
+            timestamp=packet[0]
+            ext_protocol = packet[17]
+            extension = packet[18:-1]
 
+            if protocol in ['tcp','udp'] and ip_layer == False:
+                flowid = packet[1] if protocol=='tcp' else packet[2]
+                srcport = packet[7] if protocol=='tcp' else packet[8]
+                dstport = packet[11] if protocol=='tcp' else packet[12]
+                payload_length = packet[15] if protocol =='tcp' else packet[16]
+            else:
+                flowid = 0
+                srcport = 1
+                dstport = 0
+                payload_length = 0
+            result.append([path]+[(protocol,ext_protocol), flowid, timestamp, ip_len, ip_src, ip_dst, srcport, dstport,payload_length, extension])
         # Get result as numpy array
 
-        result = np.asarray(result)
+        result = np.asarray(result, dtype=object)
 
         # Check if any items exist
         if not result.shape[0]:
