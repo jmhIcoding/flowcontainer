@@ -1,27 +1,23 @@
 # 库介绍
-flowcontainer是基于python3的网络流量基本信息提取库，以方便完成网络流量的分析任务。给定pcap文件，该库会提取pcap所有的流的相关信息，其中流信息包括：流的源端口、源IP、目的IP、目的端口、IP数据包的长度序列、IP数据集的到达时间序列、有效载荷序列以及相应有效载荷的到达时间序列、等扩展信息。库会对IP数据包做过滤，那些tcp/udp载荷不为0的数据包会统计到有效载荷序列里面。工具简单易用，扩展性和复用性高。
+flowcontainer是由信息工程研究所智能信息对抗组开源的基于python3的网络流量基本信息提取库，以方便完成网络流量的分析任务。给定pcap文件，该库会提取pcap所有的流的相关信息，其中流信息包括：流的源端口、源IP、目的IP、目的端口、IP数据包的长度序列、IP数据集的到达时间序列、有效载荷序列以及相应有效载荷的到达时间序列、等扩展信息。库会对IP（IPv6) 数据包做过滤，那些tcp/udp载荷不为0的数据包会统计到有效载荷序列里面。工具简单易用，扩展性和复用性高。
 # 博客地址
 [flowcontainer: 基于python3的网络流量特征信息提取库](https://blog.csdn.net/jmh1996/article/details/107148871)
-
-url: https://blog.csdn.net/jmh1996/article/details/107148871
-
 【github有时解析markdown里面的公式出错，因此请移步博客，获取更好的文档阅读体验】
 # 库的安装
+
 ```bash
 pip3 install flowcontainer
 ```
-
-提示： github里面的代码特别古老了，pypi库里面是最新的，请使用pip3安装最新版。
-
 # 库的环境
 
 - python 3
 - numpy>=18.1
-- 系统安装好wireshark的最新版本,并将tshark所在的目录添加到系统的环境目录。安装好wireshark就会顺带把tshark也安装好。
-
+- 系统安装好wireshark的最新版本（3.0.0）,并将tshark所在的目录添加到系统的环境目录。安装好wireshark就会顺带把tshark也安装好。
 <font color="red" >
 <bold> Wireshark 4.x 相比Wireshark 3.x做了重大变化，因此不要安装 4.x的wireshark,否则可能出错!
 </bold> </font>
+
+- splitpcap, 大型PCAP切分工具。 该工具能够将大型PCAP文件切分为一系列较小的PCAP文件，加快解析速度。安装指南： https://github.com/jmhIcoding/splitpcap。
 
 **如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。**
 
@@ -29,16 +25,11 @@ pip3 install flowcontainer
 
 **如果需要提取upd.payload,那么tshark的版本需要大于3.3.0**
 
-**如果出现解析异常，可以考虑安装去官网最新版本的wireshark**
-
 <font color="red" >
-<bold>另外，请确保运行脚本的shell（尤其是pycharm和vscode里面的shell）能够正确运行 tshark ! 否则程序一定报错！</bold> </font>
+<bold>另外，请确保运行脚本的shell（尤其是pycharm和vscode里面的shell）能够正确运行 tshark 和splitpcap ! 否则程序一定报错！</bold> </font>
 
 # 解析速度
-个人PC，8线程，i5CPU, 16G内存配置下：50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
-
-使用服务器可以20分钟解析完100G流量。
-
+50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
 # 常见问题以及排除
 - 报找不到文件的错误。
 解决方法：1. 检查pcap的路径是否正确，最好使用绝对路径  2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
@@ -50,7 +41,7 @@ pip3 install flowcontainer
 if int(packet[9]) != 0:
 ValueError: invalid literal for int() with base 10: ''
 ```
-解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，重复提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
 
 此ISSUE 致谢：宝哥
 
@@ -66,13 +57,16 @@ ValueError: invalid literal for int() with base 10: ''
 **flowcontainer默认滤除重传、乱序数据包、mdns、ssdp、icmp数据包，默认只保留IP数据包。
 flowcontainer默认提取流的：源IP，源端口，目的IP，目的端口，IP包长序列，IP包到达时间序列，流到达时间戳、流结束时间戳、载荷长度序列，载荷到达时间序列。**
 
+**最新版本flowcontainer，支持ipv6解析。**
 
-`extract`函数接受3个参数：`infile,filter,extension`。
+
+`extract`函数接受4个参数：`infile,filter,extension,split_flag`。
 
 其中:
 `infile` 用于标识pcap文件路径。
 `filter` 用于添加包过滤规则，过滤规则的语义和语法规则与wireshark严格保持一致。可以为空。
 `extension` 是用于需要提取的额外的扩展字段，字段语义和语法规则也与wireshark严格保持一致。可以为空。
+`split_flag` 默认为`False`，如果被设置为`True`，那么将会对输入的PCAP按照流的五元组切分得到$M$个小PCAP文件，接着再使用线程池并发地解析$M$个小PCAP文件。当输入的PCAP比较大时，开启`split_flag`通常能得到解析速度的提升。
 
 **flowcontainer 兼容wireshark所有特殊扩展字段提取，例如X509证书、SNI、SSL的ciphersuites、tcp载荷、udp载荷、ipid字段等等。**
 
@@ -193,7 +187,8 @@ extension是一个字典，key就是传入的`tls.handshake.ciphersuite`，而va
 |tcp载荷|tcp.payload|无|
 
 此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
-# 示例输出：
+
+# 简单样例
 代码：
 ```python
 __author__ = 'dk'
@@ -235,7 +230,7 @@ for key in result:
 print(len(result))
 ```
 
-上面这段代码会提取流的基本信息，同时提取ssl流的sni，示例输出：
+上面这段代码会提取流的基本信息，同时提取ssl流的加密套件，示例输出：
 ```python
 Reading 1592993485_clear.pcap...
 Flow ('1592993485_clear.pcap', 'tcp', '0') info:
@@ -266,12 +261,5 @@ start timestamp:1592993502.710372, end timestamp :1592993527.49081
 extension: {'tls.handshake.ciphersuite': [('49195,49196,52393,49199,49200,52392,49161,49162,49171,49172,156,157,47,53', 3), ('49195', 5)]}
 ```
 
-# 安装人数统计
-从pypi可以查询到每个月通过pip安装flowcontainer的人数信息：
-|下载数| 月份 |
-|--|--|
-|  1944|2020-11  |
-|1315|2020-10|
-|1196|2020-09|
 
 
