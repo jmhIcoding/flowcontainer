@@ -30,22 +30,8 @@ pip3 install flowcontainer
 
 # 解析速度
 50G左右的流量2个小时左右即可完成所有流信息的提取。5G左右的流量12分钟即可解析完毕。
-# 常见问题以及排除
-- 报找不到文件的错误。
-解决方法：1. 检查pcap的路径是否正确，最好使用绝对路径  2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
 
-此ISSUE 致谢：宝哥
-- 报 ValueError: invalid literal for int() with base 10: 错误
-异常输出：
-```shell
-if int(packet[9]) != 0:
-ValueError: invalid literal for int() with base 10: ''
-```
-解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
 
-此ISSUE 致谢：宝哥
-
-- 其他问题： 请在github提交issue,然后上传出问题的数据包和调用例程方便解决问题。
 # 库的使用
 示例代码：
 直接导入extract函数，然后给定pcap的路径即可。
@@ -188,7 +174,8 @@ extension是一个字典，key就是传入的`tls.handshake.ciphersuite`，而va
 
 此外，tshark不允许对同一个字段，连续提取多次。**因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号等默认提取的字段做二次提取，否则会出现编码解析的错误！**
 
-# 简单样例
+# 样例
+## 简单例程
 下面的代码展示了flowcontainer 最基本的用法：
 ```python
 __author__ = 'dk'
@@ -261,16 +248,45 @@ start timestamp:1592993502.710372, end timestamp :1592993527.49081
 extension: {'tls.handshake.ciphersuite': [('49195,49196,52393,49199,49200,52392,49161,49162,49171,49172,156,157,47,53', 3), ('49195', 5)]}
 ```
 
-# 其他案例： example_code
+## 其他例程
 在example_code文件夹里面，有多个使用flowcontainer获取流量信息的案例。
+
+- easy_example.py 
+展示了如何获取网络流量的包长、包到达间隔等信息，这些信息对于开展加密网络流分析实验特别重要
+- parse_very_large_pcap.py 
+展示了如何使用流量切分加速解析超大PCAP文件。
+- http 
+HTTP流量解析案例，案例展示了如何获取HTTP的User-agent, http-url等。
+
+示例输出：
 ```
-├─easy_example.py 展示了如何获取网络流量的包长、包到达间隔等信息，这些信息对于开展加密网络流分析实验特别重要
-├─parse_very_large_pcap.py 展示了如何使用流量切分加速解析超大PCAP文件。
-├─http HTTP流量解析案例，案例展示了如何获取HTTP的User-agent, http-url等。
-├─dns  DNS流量解析案例，案例展示了如何解析DNS的A记录等。
-├─http HTTP流量解析案例，案例展示了如何获取HTTP的User-agent, http-url等。
-└─ssl SSL流量解析案例，案例展示了如何获取SNI、证书，以及如何解析流量中的X509证书。
+{'pcapname': 'nat.pcap', 'src_ip': '172.16.30.159', 'sport': 46648, 'dst_ip': '61.149.22.99', 'dport': 80, 'protocol': 'tcp', 'ext_proto': 'HTTP', 'start': 1521603003.580238, 'end': 1521603003.580238, 'http.user_agent': 'NeteaseMusic/5.0.0.1520384820(115);Dalvik/2.1.0 (Linux; U; Android 8.0.0; STF-AL00 Build/HUAWEISTF-AL00)', 'http.request.full_uri': 'http://p2.music.126.net/SbJn22gsq-Pv6WLm8PK98A==/564049465093755.jpg?imageView=1&thumbnail=360z360&type=webp&quality=80', 'http.host': 'p2.music.126.net'}
+```
+- dns 
+ DNS流量解析案例，案例展示了如何解析DNS的A记录等。
+```
+{'pcapname': 'dns.pcapng', 'src_ip': '192.168.172.51', 'sport': 51518, 'dst_ip': '8.8.8.8', 'dport': 53, 'protocol': 'udp', 'ext_proto': 'DNS', 'start': 1669704818, 'end': 1669704818, 'dns_records': [{'NAME': 'dns.google', 'TYPE': 'A', 'ADDRESS': '8.8.8.8'}, {'NAME': 'dns.google', 'TYPE': 'A', 'ADDRESS': '8.8.4.4'}]}
+```
+- ssl 
+SSL流量解析案例，案例展示了如何获取SNI、证书，以及如何解析流量中的X509证书。
+```
+{'pcapname': 'tid_ssl.pcap', 'src_ip': '119.78.131.162', 'sport': 50665, 'dst_ip': '23.56.20.10', 'dport': 443, 'protocol': 'tcp', 'ext_proto': 'TLSv1.2', 'start': 1597319999.645109, 'end': 1597319999.732076, 'sni': 'c.go-mpulse.net', 'cipher_suites': '49192,49191,49172,49171,159,158,57,51,157,156,61,60,53,47,49196,49195,49188,49187,49162,49161,106,64,56,50,10,19|49196', 'certificates': [{'issuer': {'countryName': 'US', 'organizationName': 'DigiCert Inc', 'organizationalUnitName': 'www.digicert.com', 'commonName': 'DigiCert Secure Site ECC CA-1'}, 'subject': {'countryName': 'US', 'stateOrProvinceName': 'Massachusetts', 'localityName': 'Cambridge', 'organizationName': 'Akamai Technologies', 'organizationalUnitName': 'SOASTA', 'commonName': 'akstat.io'}, 'not_valid_before': '2020-05-06 00:00:00', 'not_valid_after': '2021-08-05 12:00:00', 'seriral_number': 12148336732659377462193089635366108055, 'version': 'v3'}, {'issuer': {'countryName': 'US', 'organizationName': 'DigiCert Inc', 'organizationalUnitName': 'www.digicert.com', 'commonName': 'DigiCert Global Root CA'}, 'subject': {'countryName': 'US', 'organizationName': 'DigiCert Inc', 'organizationalUnitName': 'www.digicert.com', 'commonName': 'DigiCert Secure Site ECC CA-1'}, 'not_valid_before': '2019-02-15 12:45:24', 'not_valid_after': '2029-02-15 12:45:24', 'seriral_number': 15099003683604006848814258862226398944, 'version': 'v3'}]}
 ```
 
+# 常见问题以及排除
+- 报找不到文件的错误。
+解决方法：1. 检查pcap的路径是否正确，最好使用绝对路径  2. 检查当前shell能否打开tshark ，确保环境变量有tshark所在路径。3. 检查tshark版本，是否在2.6.0以上。
 
+此ISSUE 致谢：宝哥
+- 报 ValueError: invalid literal for int() with base 10: 错误
+异常输出：
+```shell
+if int(packet[9]) != 0:
+ValueError: invalid literal for int() with base 10: ''
+```
+解决方法：1. 在extract函数调用时，指定filter为`tcp or udp` 。这是因为pcap里面出现了非tcp/udp的packet，导致端口信息无法正常定位。**2. tshark不允许对同一个字段，连续提取多次。因此切勿在extensions里面对udp/tcp的长度、ip长度、ip地址、端口号做二次提取。**
+
+此ISSUE 致谢：宝哥
+
+- 其他问题： 请在github提交issue,然后上传出问题的数据包和调用例程方便解决问题。
 
