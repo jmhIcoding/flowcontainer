@@ -17,7 +17,7 @@ pip3 install flowcontainer
 <bold> Wireshark 4.x 相比Wireshark 3.x做了重大变化，因此不要安装 4.x的wireshark,否则可能出错!
 </bold> </font>
 
-- splitpcap, 大型PCAP切分工具。 该工具能够将大型PCAP文件切分为一系列较小的PCAP文件，加快解析速度。安装指南： https://github.com/jmhIcoding/splitpcap。
+- splitpcap, 大型PCAP切分工具。 该工具能够将大型PCAP文件切分为一系列较小的PCAP文件，加快解析速度。安装指南： https://github.com/jmhIcoding/splitpcap
 
 **如果只是提取流的端口号、包长序列等基本信息，tshark的版本号只需大于2.6.0即可。**
 
