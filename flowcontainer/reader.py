@@ -161,7 +161,7 @@ class Reader(object):
                    '-e', "tcp.len",
                    "-e", "udp.length",   #only output one line,
                    "-e", 'ip.id',
-                   "-2","-R", "ip or ipv6 and not icmp and not tcp.analysis.retransmission and not tcp.analysis.out_of_order and not tcp.analysis.duplicate_ack and not mdns and not ssdp{0}"]
+                   "-2","-R", "ip or ipv6 and not icmp and not tcp.analysis.retransmission and not mdns and not ssdp{0}"]
         else:
             command = ["tshark", "-r", path, "-Tfields", "-E", "separator=`",
                    "-e", "frame.time_epoch",
